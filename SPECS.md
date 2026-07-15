@@ -48,7 +48,20 @@ um app Android dedicado.
   mas o **RTC DS3231 mantém a hora certa** (bateria própria) para quando a
   energia voltar.
 
-## 3. Firmware — Comportamento Funcional
+## 3. Firmware
+
+### 3.0 Linguagem e Ambiente de Desenvolvimento
+
+- **Linguagem/Framework**: MicroPython (porta oficial para ESP32).
+- **IDE/Ferramenta**: Thonny (upload de arquivos, REPL interativo para testes
+  de sensores/display isolados antes de integrar tudo).
+- **BLE**: módulo `bluetooth` (ubluetooth) nativo do MicroPython — API de
+  baixo nível baseada em IRQ/callbacks; o serviço GATT customizado (seção 4)
+  será implementado manualmente sobre essa API.
+- **Drivers**: sem bibliotecas prontas equivalentes ao Arduino — os drivers
+  de LCD paralelo (4 bits), DS3231 (I2C) e DS18B20 (`onewire`/`ds18x20`,
+  estes já inclusos no firmware MicroPython) serão escritos/adaptados
+  especificamente para este projeto.
 
 ### 3.1 Modo Normal (padrão, tudo simultâneo)
 
@@ -78,7 +91,7 @@ Linha 4: [status BLE / livre]   <- indicador de conexão BLE, ou em branco
 - **Hora/data**: mantidas pelo RTC DS3231 (bateria própria), lidas pelo
   ESP32 a cada ciclo.
 - **Configurações** (ex: unidade de temperatura °C/°F, brilho/contraste se
-  controlável por software): salvas em NVS (Preferences) do ESP32,
+  controlável por software): salvas em NVS via `esp32.NVS()` (MicroPython),
   sobrevivem a reinícios.
 - **Letreiro**: não persiste entre reinícios (efêmero) — se o ESP32
   reiniciar durante o letreiro, volta ao Modo Normal.
@@ -112,7 +125,7 @@ inclusive com apps BLE genéricos como nRF Connect).
 ## 5. Estrutura do Repositório (proposta)
 
 ```
-/firmware        Projeto ESP32 (PlatformIO)
+/firmware        Projeto ESP32 (MicroPython — arquivos .py, fluxo via Thonny)
 /android-app      Projeto Android (Kotlin)
 /docs             Diagramas de conexão, protocolo BLE detalhado
 SPECS.md          Este documento
