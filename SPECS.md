@@ -138,3 +138,20 @@ README.md         Visão geral do projeto
 - Bateria de backup do sistema (só o RTC tem bateria própria).
 - Fila de múltiplas mensagens de letreiro (apenas uma mensagem ativa por vez).
 - Alarmes, timers ou outras funcionalidades além de relógio/temperatura/letreiro.
+
+## 7. Ordem de Desenvolvimento (Roadmap)
+
+Trabalho incremental, com verificação/aprovação de cada etapa antes de avançar
+para a próxima:
+
+1. **Display** — driver LCD paralelo 4 bits (HD44780) em MicroPython, teste
+   de escrita nas 4 linhas.
+2. **RTC + Temperatura** — integra DS3231 (I2C) e DS18B20 (1-Wire), fecha o
+   Modo Normal completo (data + hora + temperatura no display).
+3. **Esqueleto BLE** — serviço GATT mínimo funcionando (características
+   SetDateTime/Marquee/Config/Status), testável com app BLE genérico
+   (ex: nRF Connect) antes do app dedicado existir.
+4. **App Android** — desenvolvido contra o BLE já funcional do firmware.
+5. **Modo Letreiro** — scroll + duração, acionado pelas mensagens recebidas
+   via BLE (firmware + app).
+6. **Persistência** (NVS) e revisão final de todas as configurações.
