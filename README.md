@@ -20,7 +20,7 @@ Especificação completa (hardware, firmware, protocolo BLE, roadmap): [`SPECS.m
 Seguindo o roadmap incremental definido no `SPECS.md` (seção 7):
 
 - [x] 1. Display — driver LCD 4-bit validado em bancada
-- [ ] 2. RTC interno + Temperatura (Modo Normal completo)
+- [x] 2. RTC interno + Temperatura — Modo Normal completo, validado em bancada (`main.py` autônomo)
 - [ ] 3. Esqueleto do serviço BLE
 - [ ] 4. App Android
 - [ ] 5. Modo Letreiro
