@@ -91,5 +91,7 @@ class LCD4Bit:
     def write_line(self, text, row):
         # Escreve a linha inteira, preenchendo com espaços para apagar
         # qualquer resíduo de conteúdo anterior mais longo.
-        line = text[: self.cols].ljust(self.cols)
+        # (preenchimento manual: MicroPython não tem str.ljust())
+        truncated = text[: self.cols]
+        line = truncated + " " * (self.cols - len(truncated))
         self.putstr(line, col=0, row=row)
