@@ -60,6 +60,26 @@ hora gravada (desatualizada) até você editar e reenviar `main.py` de
 novo. Isso será resolvido quando o app Android puder reenviar a hora
 via BLE (etapa 4 do roadmap).
 
+## Como testar o BLE (etapa 3 do roadmap)
+
+1. Suba `config.py`, `lcd_hd44780.py`, `ds18b20_sensor.py`, `ble_service.py`
+   e `test_ble.py`.
+2. Rode `test_ble.py` (F5). O display deve continuar mostrando o Modo
+   Normal, e o ESP32 passa a anunciar via BLE como **"Relogio-ESP32"**.
+3. No celular, abra um app BLE genérico (ex: **nRF Connect**), conecte no
+   "Relogio-ESP32" e localize o serviço `8da7ea58-...`.
+4. Teste cada característica (UUIDs completos no `SPECS.md` seção 4.2):
+   - **SetDateTime** (write): envie o JSON `{"epoch": 1752500000}` (troque
+     pelo epoch Unix atual) — o Shell do Thonny deve mostrar
+     `SetDateTime recebido, RTC ajustado: (...)` e a hora no display muda.
+   - **Marquee** (write): envie `{"text": "Bom dia!", "duration_s": 30, "speed_ms": 300}`
+     — aparece no Shell (`Marquee recebido: {...}`); o comportamento real
+     no display ainda não está implementado (etapa 5).
+   - **Config** (read/write): leia o valor atual (`{"temp_unit": "C"}`) ou
+     escreva um novo.
+   - **Status** (read/notify): ative notificações — a cada ~5s deve chegar
+     um JSON com `temp_c` atualizado.
+
 ## Pinagem usada (ver `config.py` / `SPECS.md` seção 2.2)
 
 | Sinal | GPIO |

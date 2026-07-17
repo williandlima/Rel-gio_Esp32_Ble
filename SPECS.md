@@ -111,16 +111,21 @@ Linha 4: [status BLE / livre]   <- indicador de conexão BLE, ou em branco
 GATT customizado, payloads em **JSON** (texto legível, fácil de debugar
 inclusive com apps BLE genéricos como nRF Connect).
 
-### 4.2 Serviço e Características (proposta inicial)
+### 4.2 Serviço e Características
 
-| Característica | UUID (a gerar) | Propriedade | Payload (JSON) |
+Serviço: `8da7ea58-d7a9-4740-899d-e790d280bbec`
+
+| Característica | UUID | Propriedade | Payload (JSON) |
 |---|---|---|---|
-| SetDateTime | custom | Write | `{"epoch": 1752500000}` |
-| Marquee | custom | Write | `{"text": "Bom dia!", "duration_s": 30, "speed_ms": 300}` |
-| Config | custom | Read/Write | `{"temp_unit": "C"}` |
-| Status | custom | Read/Notify | `{"mode": "normal", "temp_c": 24.5, "connected": true}` |
+| SetDateTime | `05dbf463-f5f4-4b26-9432-a063782076d3` | Write | `{"epoch": 1752500000}` |
+| Marquee | `361e7fd4-683a-49bc-a3ad-9d0e284db3c7` | Write | `{"text": "Bom dia!", "duration_s": 30, "speed_ms": 300}` |
+| Config | `592e0d32-9975-435b-8986-1ab319153779` | Read/Write | `{"temp_unit": "C"}` |
+| Status | `8f86a231-9483-468f-b065-2082f2cadc88` | Read/Notify | `{"mode": "normal", "temp_c": 24.5, "connected": true}` |
 
-> UUIDs definitivos serão gerados na etapa de implementação do firmware.
+> **Nota sobre `epoch` (SetDateTime)**: é o epoch Unix padrão (segundos
+> desde 1970-01-01), o mesmo formato que `System.currentTimeMillis()/1000`
+> no Android. O firmware converte internamente para a época usada pelo
+> `machine.RTC` do ESP32 (2000-01-01).
 
 ### 4.3 App Android
 
