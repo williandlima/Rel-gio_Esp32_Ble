@@ -10,9 +10,5 @@ LCD_D7 = 33
 LCD_COLS = 20
 LCD_ROWS = 4
 
-# RTC DS3231 (I2C)
-I2C_SDA = 21
-I2C_SCL = 22
-
 # Sensor de temperatura DS18B20 (1-Wire)
 ONEWIRE_DATA = 4

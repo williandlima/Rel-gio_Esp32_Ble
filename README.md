@@ -11,7 +11,7 @@ Especificação completa (hardware, firmware, protocolo BLE, roadmap): [`SPECS.m
 - **Microcontrolador**: ESP32
 - **Firmware**: MicroPython, desenvolvido/gravado via [Thonny](https://thonny.org)
 - **Display**: NHD-0420E2Z-NSW-BBW (20x4, paralelo HD44780, modo 4 bits)
-- **RTC**: DS3231 (I2C)
+- **RTC**: interno do ESP32 (`machine.RTC`, sem bateria de backup)
 - **Temperatura**: DS18B20 (1-Wire)
 - **App**: Android (Kotlin), configuração via BLE
 
@@ -20,7 +20,7 @@ Especificação completa (hardware, firmware, protocolo BLE, roadmap): [`SPECS.m
 Seguindo o roadmap incremental definido no `SPECS.md` (seção 7):
 
 - [x] 1. Display — driver LCD 4-bit validado em bancada
-- [ ] 2. RTC + Temperatura (Modo Normal completo)
+- [ ] 2. RTC interno + Temperatura (Modo Normal completo)
 - [ ] 3. Esqueleto do serviço BLE
 - [ ] 4. App Android
 - [ ] 5. Modo Letreiro

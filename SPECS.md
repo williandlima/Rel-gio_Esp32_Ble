@@ -15,9 +15,9 @@ um app Android dedicado.
 |---|---|---|---|
 | Microcontrolador | ESP32 DevKit (30/38 pinos) | — | Wi-Fi não utilizado, apenas BLE |
 | Display | NHD-0420E2Z-NSW-BBW | Paralelo HD44780, modo 4 bits | 20 colunas x 4 linhas, fundo azul/texto branco |
-| RTC | DS3231 (módulo) | I2C | Bateria coin-cell própria (CR2032), mantém hora sem USB |
+| RTC | Interno do ESP32 (`machine.RTC`) | — | Sem bateria de backup — perde a hora ao desligar/resetar (ver seção 2.3) |
 | Sensor de temperatura | DS18B20 | 1-Wire | Isolado do calor do ESP32 por fio, ambiente real |
-| Alimentação | USB 5V (micro-USB ou USB-C, conforme a placa) | — | Sem bateria de backup do sistema (só o RTC tem a própria) |
+| Alimentação | USB 5V (micro-USB ou USB-C, conforme a placa) | — | Sem bateria de backup no sistema |
 | Resistor pull-up 1-Wire | 4.7kΩ | — | Entre dado do DS18B20 e 3.3V |
 | Potenciômetro contraste LCD | 10kΩ | — | Pino Vo do display |
 
@@ -35,8 +35,6 @@ um app Android dedicado.
 | LCD Vo | Potenciômetro 10k (entre GND e VDD 5V) | Ajuste de contraste |
 | LCD RW | GND | Fixado em modo escrita (RW=0) |
 | LCD Backlight (LED+) | 5V via resistor série (~100-220Ω) | Conforme datasheet |
-| I2C SDA (RTC) | GPIO21 | |
-| I2C SCL (RTC) | GPIO22 | |
 | DS18B20 DATA | GPIO4 | Pull-up 4.7kΩ para 3.3V |
 
 > Pinos de strapping do ESP32 (GPIO0, 2, 12, 15) evitados propositalmente.
@@ -52,9 +50,10 @@ um app Android dedicado.
 ### 2.3 Alimentação
 
 - Fonte: USB 5V (do próprio conector da placa ESP32).
-- Sem bateria de backup para o sistema — se faltar USB, o relógio desliga,
-  mas o **RTC DS3231 mantém a hora certa** (bateria própria) para quando a
-  energia voltar.
+- Sem bateria de backup no sistema — se faltar USB, o relógio desliga e
+  **perde a hora** (RTC interno do ESP32, sem bateria própria). Ao religar,
+  a hora precisa ser reenviada via BLE (characteristic SetDateTime, seção 4.2)
+  antes do Modo Normal voltar a mostrar hora correta.
 
 ## 3. Firmware
 
@@ -66,10 +65,10 @@ um app Android dedicado.
 - **BLE**: módulo `bluetooth` (ubluetooth) nativo do MicroPython — API de
   baixo nível baseada em IRQ/callbacks; o serviço GATT customizado (seção 4)
   será implementado manualmente sobre essa API.
-- **Drivers**: sem bibliotecas prontas equivalentes ao Arduino — os drivers
-  de LCD paralelo (4 bits), DS3231 (I2C) e DS18B20 (`onewire`/`ds18x20`,
-  estes já inclusos no firmware MicroPython) serão escritos/adaptados
-  especificamente para este projeto.
+- **Drivers**: sem bibliotecas prontas equivalentes ao Arduino — o driver de
+  LCD paralelo (4 bits) foi escrito especificamente para este projeto; o
+  DS18B20 usa os módulos `onewire`/`ds18x20` já inclusos no firmware
+  MicroPython; a hora usa `machine.RTC` (nativo, interno do ESP32).
 
 ### 3.1 Modo Normal (padrão, tudo simultâneo)
 
@@ -96,8 +95,9 @@ Linha 4: [status BLE / livre]   <- indicador de conexão BLE, ou em branco
 
 ### 3.3 Persistência
 
-- **Hora/data**: mantidas pelo RTC DS3231 (bateria própria), lidas pelo
-  ESP32 a cada ciclo.
+- **Hora/data**: mantidas pelo RTC interno do ESP32 (`machine.RTC`) enquanto
+  a placa estiver ligada. **Não sobrevive a queda de energia/reset** — o
+  app precisa reenviar a hora via BLE sempre que isso acontecer.
 - **Configurações** (ex: unidade de temperatura °C/°F, brilho/contraste se
   controlável por software): salvas em NVS via `esp32.NVS()` (MicroPython),
   sobrevivem a reinícios.
@@ -143,7 +143,8 @@ README.md         Visão geral do projeto
 ## 6. Fora de Escopo (nesta fase)
 
 - Wi-Fi / sincronização NTP (uso exclusivo de BLE, conforme definido).
-- Bateria de backup do sistema (só o RTC tem bateria própria).
+- RTC externo com bateria de backup (decisão revertida — ver seção 2.1;
+  hora é perdida em queda de energia e precisa ser reenviada via BLE).
 - Fila de múltiplas mensagens de letreiro (apenas uma mensagem ativa por vez).
 - Alarmes, timers ou outras funcionalidades além de relógio/temperatura/letreiro.
 
@@ -154,8 +155,9 @@ para a próxima:
 
 1. **Display** — driver LCD paralelo 4 bits (HD44780) em MicroPython, teste
    de escrita nas 4 linhas.
-2. **RTC + Temperatura** — integra DS3231 (I2C) e DS18B20 (1-Wire), fecha o
-   Modo Normal completo (data + hora + temperatura no display).
+2. **RTC interno + Temperatura** — integra `machine.RTC` (interno do ESP32)
+   e DS18B20 (1-Wire), fecha o Modo Normal completo (data + hora +
+   temperatura no display).
 3. **Esqueleto BLE** — serviço GATT mínimo funcionando (características
    SetDateTime/Marquee/Config/Status), testável com app BLE genérico
    (ex: nRF Connect) antes do app dedicado existir.

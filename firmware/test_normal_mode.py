@@ -1,18 +1,20 @@
-# Teste do Modo Normal completo: LCD + RTC DS3231 + sensor DS18B20.
-# Pré-requisito: já ter rodado set_rtc_time.py uma vez para acertar o RTC.
+# Teste do Modo Normal completo: LCD + RTC interno do ESP32 + DS18B20.
+# Pré-requisito: já ter rodado set_time.py uma vez para acertar a hora
+# (o RTC interno perde a hora ao reiniciar/desligar — reajuste quando precisar).
 #
-# Arquivos necessários no ESP32: config.py, lcd_hd44780.py, rtc_ds3231.py,
-# ds18b20_sensor.py, test_normal_mode.py
+# Arquivos necessários no ESP32: config.py, lcd_hd44780.py, ds18b20_sensor.py,
+# test_normal_mode.py
 
-from machine import I2C, Pin
+from machine import RTC
 from utime import sleep
 
 from lcd_hd44780 import LCD4Bit
-from rtc_ds3231 import DS3231
 from ds18b20_sensor import DS18B20
 import config
 
 WEEKDAYS = ("", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom")
+
+rtc = RTC()
 
 lcd = LCD4Bit(
     rs_pin=config.LCD_RS,
@@ -25,8 +27,6 @@ lcd = LCD4Bit(
     rows=config.LCD_ROWS,
 )
 
-i2c = I2C(0, sda=Pin(config.I2C_SDA), scl=Pin(config.I2C_SCL))
-rtc = DS3231(i2c)
 temp_sensor = DS18B20(config.ONEWIRE_DATA)
 
 # A leitura do DS18B20 leva ~750ms (tempo de conversão do sensor), por isso
@@ -36,7 +36,7 @@ cycle = 0
 temp_c = temp_sensor.read_celsius()
 
 while True:
-    year, month, day, weekday, hour, minute, second = rtc.get_datetime()
+    year, month, day, weekday, hour, minute, second, _ = rtc.datetime()
 
     if cycle % TEMP_REFRESH_CYCLES == 0:
         temp_c = temp_sensor.read_celsius()
