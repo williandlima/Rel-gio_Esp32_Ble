@@ -40,6 +40,26 @@ DS18B20 (1-Wire) já ligado conforme `config.py` / `SPECS.md` seção 2.2
    Relogio ESP32 BLE
    ```
 
+## Rodar sozinho, sem Thonny (etapa 2 — modo autônomo)
+
+MicroPython executa automaticamente um arquivo chamado **`main.py`**
+sempre que o ESP32 recebe energia — não precisa estar conectado ao
+Thonny nem ao computador, só ligado na tomada/carregador/power bank USB.
+
+1. Edite a data/hora no topo de `main.py` (mesma lógica do `set_time.py`,
+   já embutida aqui).
+2. Suba `config.py`, `lcd_hd44780.py`, `ds18b20_sensor.py` e `main.py`
+   pro ESP32 (nomes exatos, principalmente `main.py`).
+3. Desconecte do Thonny e plugue o ESP32 em qualquer fonte USB — o
+   display deve acender e mostrar o relógio sozinho.
+
+**Limitação atual**: como não há RTC com bateria, a hora gravada em
+`main.py` só fica correta a partir do momento em que você fez o upload.
+Se a placa perder energia depois, ao religar ela volta pra essa mesma
+hora gravada (desatualizada) até você editar e reenviar `main.py` de
+novo. Isso será resolvido quando o app Android puder reenviar a hora
+via BLE (etapa 4 do roadmap).
+
 ## Pinagem usada (ver `config.py` / `SPECS.md` seção 2.2)
 
 | Sinal | GPIO |
