@@ -31,15 +31,23 @@ um app Android dedicado.
 | LCD D5 | GPIO26 | |
 | LCD D6 | GPIO25 | |
 | LCD D7 | GPIO33 | |
-| LCD Vo | Potenciômetro 10k | Ajuste de contraste |
+| LCD VDD | **5V** (pino VIN/5V do ESP32, vindo do USB) | Ver nota abaixo — este display **não opera em 3.3V** |
+| LCD Vo | Potenciômetro 10k (entre GND e VDD 5V) | Ajuste de contraste |
 | LCD RW | GND | Fixado em modo escrita (RW=0) |
-| LCD Backlight (LED+) | 3.3V via resistor série (~100-220Ω) | Conforme datasheet |
+| LCD Backlight (LED+) | 5V via resistor série (~100-220Ω) | Conforme datasheet |
 | I2C SDA (RTC) | GPIO21 | |
 | I2C SCL (RTC) | GPIO22 | |
 | DS18B20 DATA | GPIO4 | Pull-up 4.7kΩ para 3.3V |
 
 > Pinos de strapping do ESP32 (GPIO0, 2, 12, 15) evitados propositalmente.
 > Pinagem final pode ser ajustada conforme a placa DevKit específica usada.
+
+> **Importante — VDD do display**: o NHD-0420E2Z-NSW-BBW exige alimentação
+> de **5V** no VDD (não suporta 3.3V). Use o pino 5V/VIN do ESP32 (disponível
+> na maioria das DevKits, vindo direto do USB) para VDD e para o backlight.
+> Os sinais de dados (RS, E, D4-D7) continuam saindo dos GPIOs em 3.3V
+> normalmente — o HD44780 reconhece 3.3V como nível lógico alto mesmo com
+> VDD em 5V, sem necessidade de conversor de nível.
 
 ### 2.3 Alimentação
 
