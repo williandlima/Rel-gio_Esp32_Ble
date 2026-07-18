@@ -9,6 +9,7 @@
 
 import json
 import bluetooth
+from machine import Timer
 from micropython import const
 
 _IRQ_CENTRAL_CONNECT = const(1)
@@ -115,4 +116,10 @@ class ClockBLEService:
             self._adv_name = name.encode()
         name_bytes = self._adv_name
         payload += bytes((len(name_bytes) + 1, 0x09)) + name_bytes
-        self._ble.gap_advertise(interval_us, adv_data=payload)
+        try:
+            self._ble.gap_advertise(interval_us, adv_data=payload)
+        except OSError:
+            # Logo após uma desconexão, o stack BLE às vezes ainda não está
+            # pronto para reanunciar (OSError: -30). Tenta de novo em breve.
+            Timer(-1).init(mode=Timer.ONE_SHOT, period=200,
+                            callback=lambda t: self._advertise())
