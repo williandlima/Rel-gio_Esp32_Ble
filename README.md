@@ -21,8 +21,8 @@ Seguindo o roadmap incremental definido no `SPECS.md` (seção 7):
 
 - [x] 1. Display — driver LCD 4-bit validado em bancada
 - [x] 2. RTC interno + Temperatura — Modo Normal completo, validado em bancada (`main.py` autônomo)
-- [ ] 3. Esqueleto do serviço BLE
-- [ ] 4. App Android
+- [x] 3. Esqueleto do serviço BLE — validado (SetDateTime ajustando o RTC via Bluetooth)
+- [ ] 4. App Android — código pronto (`android-app/`), aguardando build/teste no Android Studio
 - [ ] 5. Modo Letreiro
 - [ ] 6. Persistência (NVS) e revisão final
 
@@ -31,5 +31,5 @@ Seguindo o roadmap incremental definido no `SPECS.md` (seção 7):
 ```
 SPECS.md          Especificação completa do projeto
 firmware/          Firmware ESP32 em MicroPython (ver firmware/README.md para instruções de uso via Thonny)
-android-app/       App Android (ainda não iniciado)
+android-app/       App Android (ver android-app/README.md para instruções de setup no Android Studio)
 ```
