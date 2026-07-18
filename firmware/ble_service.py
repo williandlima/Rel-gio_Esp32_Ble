@@ -69,6 +69,7 @@ class ClockBLEService:
         elif event == _IRQ_GATTS_WRITE:
             conn_handle, value_handle = data
             raw = self._ble.gatts_read(value_handle)
+            print("BLE write recebido, bytes brutos:", raw)
             if value_handle == self._handle_set_datetime:
                 self._dispatch_json(raw, self.on_set_datetime)
             elif value_handle == self._handle_marquee:
@@ -82,7 +83,8 @@ class ClockBLEService:
         try:
             data = json.loads(raw)
         except ValueError:
-            return  # payload inválido, ignora
+            print("Payload BLE invalido (nao e JSON valido):", raw)
+            return
         callback(data)
 
     def set_status(self, status_dict):
