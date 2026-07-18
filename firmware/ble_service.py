@@ -40,6 +40,7 @@ class ClockBLEService:
     def __init__(self, name="Relogio-ESP32"):
         self._ble = bluetooth.BLE()
         self._ble.active(True)
+        self._ble.config(mtu=256)  # aceita payloads maiores que os 20 bytes padrão
         self._ble.irq(self._irq)
 
         ((
