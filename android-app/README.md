@@ -5,34 +5,34 @@ Low Energy do Android) para configurar o relógio via BLE, seguindo o
 protocolo definido no `SPECS.md` (seção 4) e implementado em
 `firmware/ble_service.py`.
 
-## Como criar o projeto no Android Studio
+## Como abrir o projeto no Android Studio
 
-1. Abra o Android Studio → **New Project** → template **"Empty Views Activity"**
-   (não "Empty Activity" com Compose — este app usa XML/ViewBinding).
-2. Configure:
-   - **Name**: RelogioESP32
-   - **Package name**: `com.relogioesp32.ble` (importante — precisa bater
-     com o pacote usado nos arquivos deste repositório)
-   - **Language**: Kotlin
-   - **Minimum SDK**: API 26 (Android 8.0) ou superior
-3. Deixe o Android Studio criar o projeto e sincronizar o Gradle.
+Este diretório (`android-app/`) já é um projeto Gradle completo (build
+files, manifest, ícone, layout, código Kotlin) — **não precisa usar o
+assistente "New Project"**. Só falta uma coisa que não deu pra gerar aqui
+no ambiente remoto (rede bloqueada para os servidores da Google/Gradle):
+o **Gradle Wrapper**. É rápido de resolver no seu Mac, que tem internet
+normal:
 
-## Como aplicar os arquivos deste repositório
-
-1. No `app/build.gradle.kts` gerado, dentro do bloco `android { ... }`,
-   adicione (se ainda não existir):
-   ```kotlin
-   buildFeatures {
-       viewBinding = true
-   }
+1. Abra o Android Studio → **Open** (não "New Project") → selecione a
+   pasta `android-app/` deste repositório.
+2. O Android Studio deve avisar que falta o Gradle Wrapper (ou tentar
+   sincronizar e falhar por isso). Se aparecer um aviso oferecendo para
+   criar o wrapper automaticamente, aceite.
+3. **Se não aparecer esse aviso automaticamente**, abra o terminal
+   integrado do Android Studio (**View > Tool Windows > Terminal**) e
+   rode:
+   ```bash
+   gradle wrapper --gradle-version 8.7 --distribution-type all
    ```
-2. Copie os arquivos deste repositório por cima dos gerados pelo Android
-   Studio (mesmos caminhos):
-   - `app/src/main/AndroidManifest.xml`
-   - `app/src/main/java/com/relogioesp32/ble/MainActivity.kt`
-   - `app/src/main/java/com/relogioesp32/ble/BleManager.kt`
-   - `app/src/main/res/layout/activity_main.xml`
-3. Sincronize o Gradle de novo (Android Studio deve pedir automaticamente).
+   (usa um Gradle instalado no seu Mac via Homebrew — `brew install
+   gradle` — se o comando `gradle` não existir).
+4. Depois disso, clique em **"Sync Project with Gradle Files"** (ícone do
+   elefante com a setinha, na barra de ferramentas).
+
+Com o wrapper criado uma vez, tudo funciona normalmente daqui pra frente —
+inclusive para quem clonar o repositório depois de você (o wrapper vai
+para o Git).
 
 ## Como testar
 
