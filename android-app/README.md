@@ -19,9 +19,30 @@ assistente "New Project" nem gerar nada manualmente:
    as dependências do projeto — precisa de internet liberada para
    `services.gradle.org`, `dl.google.com`/`maven.google.com` (SDK e
    Android Gradle Plugin) e Maven Central (dependências do app).
-3. Para gerar o APK sem abrir a IDE: `./gradlew assembleDebug` (Mac/Linux)
-   ou `gradlew.bat assembleDebug` (Windows), gera o instalável em
-   `app/build/outputs/apk/debug/app-debug.apk`.
+3. Para gerar o APK sem precisar abrir a IDE inteira, use o terminal
+   (pode ser o da própria IDE — **View → Tool Windows → Terminal** — ou
+   um PowerShell/terminal comum):
+   ```bash
+   cd android-app
+   ./gradlew assembleDebug        # Mac/Linux
+   .\gradlew.bat assembleDebug    # Windows
+   ```
+   O instalável fica em `app/build/outputs/apk/debug/app-debug.apk` — é
+   só copiar esse arquivo pro celular (cabo, WhatsApp, e-mail, Drive...)
+   e tocar nele pra instalar (pode pedir pra habilitar "instalar de
+   fontes desconhecidas" na primeira vez).
+
+   **Erro comum**: `JAVA_HOME is not set and no 'java' command could be
+   found in your PATH`. Acontece porque um terminal solto não tem a
+   variável de ambiente que o Android Studio usa internamente — mas a
+   IDE já vem com um Java embutido, então basta apontar pra ele nessa
+   sessão do terminal antes de rodar o `gradlew`:
+   ```powershell
+   $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"   # Windows
+   export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  # Mac
+   ```
+   (ajuste o caminho se o Android Studio estiver instalado em outro
+   lugar). Depois disso, `./gradlew assembleDebug` funciona normalmente.
 
 ## Por que o build/APK não sai pronto deste repositório
 
