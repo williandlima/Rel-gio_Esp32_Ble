@@ -1,22 +1,25 @@
-# Teste do esqueleto BLE: LCD + RTC interno + DS18B20 + serviço GATT.
+# Teste do esqueleto BLE (etapas 3+5): LCD + RTC interno + DS18B20 +
+# serviço GATT + Modo Letreiro.
 #
-# Use um app BLE genérico (ex: nRF Connect) pra:
+# Use um app BLE genérico (ex: nRF Connect) ou o app Android pra:
 #   - Escrever em SetDateTime: {"epoch": 1752500000}  (epoch Unix, segundos
 #     desde 1970 — o mesmo que System.currentTimeMillis()/1000 no Android)
 #     -> deve ajustar o RTC interno na hora.
 #   - Escrever em Marquee: {"text": "Bom dia!", "duration_s": 30, "speed_ms": 300}
-#     -> por enquanto só aparece no Shell (o comportamento real do modo
-#     letreiro é a etapa 5 do roadmap).
+#     -> ativa o Modo Letreiro: texto rola nas 4 linhas do display pelo
+#     tempo configurado, depois volta sozinho ao Modo Normal.
 #   - Ler/escrever em Config: {"temp_unit": "C"}
-#   - Ler/assinar notificações em Status: {"mode": "normal", "temp_c": ..., "connected": ...}
+#   - Ler/assinar notificações em Status: {"mode": "normal"|"marquee", "temp_c": ..., "connected": ...}
 
 from machine import RTC
-from utime import sleep, localtime
+from utime import sleep_ms, ticks_ms, ticks_diff, localtime
 
 from lcd_hd44780 import LCD4Bit
 from ds18b20_sensor import DS18B20
 from ble_service import ClockBLEService
 import config
+
+print("=== test_ble.py v3 (modo letreiro) ===")
 
 WEEKDAYS = ("", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom")
 
@@ -39,6 +42,14 @@ lcd = LCD4Bit(
 )
 temp_sensor = DS18B20(config.ONEWIRE_DATA)
 
+# ---- Estado do Modo Letreiro ----
+marquee_active = False
+marquee_padded = ""
+marquee_scroll_offset = 0
+marquee_speed_ms = 300
+marquee_duration_ms = 0
+marquee_start_ticks = 0
+
 
 def handle_set_datetime(data):
     unix_epoch = data.get("epoch")
@@ -53,8 +64,22 @@ def handle_set_datetime(data):
 
 
 def handle_marquee(data):
-    # Comportamento real (scroll + duração) é a etapa 5 do roadmap.
-    print("Marquee recebido:", data)
+    global marquee_active, marquee_padded, marquee_scroll_offset
+    global marquee_speed_ms, marquee_duration_ms, marquee_start_ticks
+
+    text = data.get("text", "")
+    duration_s = data.get("duration_s", 30)
+    speed_ms = data.get("speed_ms", 300)
+
+    marquee_padded = (" " * config.LCD_COLS) + text + (" " * config.LCD_COLS)
+    marquee_scroll_offset = 0
+    marquee_speed_ms = max(speed_ms, 50)
+    marquee_duration_ms = int(duration_s * 1000)
+    marquee_start_ticks = ticks_ms()
+    marquee_active = True
+
+    ble.set_status({"mode": "marquee", "temp_c": last_temp_c, "connected": ble.is_connected()})
+    print("Modo Letreiro ativado:", text, duration_s, "s @", speed_ms, "ms")
 
 
 def handle_config_write(data):
@@ -67,29 +92,48 @@ ble.on_marquee = handle_marquee
 ble.on_config_write = handle_config_write
 ble.set_config({"temp_unit": "C"})
 
-TEMP_REFRESH_CYCLES = 5
-cycle = 0
-temp_c = temp_sensor.read_celsius()
+TEMP_REFRESH_MS = 5000
+STATUS_REFRESH_MS = 5000
+last_temp_ticks = ticks_ms()
+last_status_ticks = ticks_ms()
+last_temp_c = temp_sensor.read_celsius()
 
 while True:
+    if marquee_active:
+        if ticks_diff(ticks_ms(), marquee_start_ticks) >= marquee_duration_ms:
+            marquee_active = False
+            ble.set_status({"mode": "normal", "temp_c": last_temp_c, "connected": ble.is_connected()})
+            print("Modo Letreiro expirado, voltando ao Modo Normal")
+            continue
+
+        scroll_len = len(marquee_padded)
+        window = marquee_padded[marquee_scroll_offset:marquee_scroll_offset + config.LCD_COLS]
+        if len(window) < config.LCD_COLS:
+            window += marquee_padded[: config.LCD_COLS - len(window)]
+        for row in range(config.LCD_ROWS):
+            lcd.write_line(window, row)
+        marquee_scroll_offset = (marquee_scroll_offset + 1) % scroll_len
+
+        sleep_ms(marquee_speed_ms)
+        continue
+
+    # ---- Modo Normal ----
+    now = ticks_ms()
+    if ticks_diff(now, last_temp_ticks) >= TEMP_REFRESH_MS:
+        last_temp_c = temp_sensor.read_celsius()
+        last_temp_ticks = now
+    if ticks_diff(now, last_status_ticks) >= STATUS_REFRESH_MS:
+        ble.set_status({"mode": "normal", "temp_c": last_temp_c, "connected": ble.is_connected()})
+        last_status_ticks = now
+
     year, month, day, weekday, hour, minute, second, _ = rtc.datetime()
-
-    if cycle % TEMP_REFRESH_CYCLES == 0:
-        temp_c = temp_sensor.read_celsius()
-        ble.set_status({
-            "mode": "normal",
-            "temp_c": temp_c,
-            "connected": ble.is_connected(),
-        })
-    cycle += 1
-
     date_str = "{}, {:02d}/{:02d}/{:04d}".format(WEEKDAYS[weekday], day, month, year)
     time_str = "{:02d}:{:02d}:{:02d}".format(hour, minute, second)
-    temp_str = "Temp: {:.1f} C".format(temp_c)
+    temp_str = "Temp: {:.1f} C".format(last_temp_c)
 
     lcd.write_line(date_str, row=0)
     lcd.write_line(time_str, row=1)
     lcd.write_line(temp_str, row=2)
     lcd.write_line("Relogio ESP32 BLE", row=3)
 
-    sleep(1)
+    sleep_ms(1000)

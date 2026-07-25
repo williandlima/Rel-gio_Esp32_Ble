@@ -73,8 +73,8 @@ via BLE (etapa 4 do roadmap).
      pelo epoch Unix atual) — o Shell do Thonny deve mostrar
      `SetDateTime recebido, RTC ajustado: (...)` e a hora no display muda.
    - **Marquee** (write): envie `{"text": "Bom dia!", "duration_s": 30, "speed_ms": 300}`
-     — aparece no Shell (`Marquee recebido: {...}`); o comportamento real
-     no display ainda não está implementado (etapa 5).
+     — o display muda pro Modo Letreiro na hora: o texto rola nas 4 linhas
+     por `duration_s` segundos, depois volta sozinho pro Modo Normal.
    - **Config** (read/write): leia o valor atual (`{"temp_unit": "C"}`) ou
      escreva um novo.
    - **Status** (read/notify): ative notificações — a cada ~5s deve chegar
