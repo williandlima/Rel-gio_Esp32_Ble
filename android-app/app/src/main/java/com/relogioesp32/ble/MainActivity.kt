@@ -114,20 +114,17 @@ class MainActivity : AppCompatActivity() {
 
     // ---- Letreiro ----
 
-    /** Mostra apenas os campos que fazem sentido no modo escolhido. */
+    /** Mostra apenas os campos que fazem sentido no modo escolhido. Os três
+     *  modos rolam da direita para a esquerda, então a velocidade vale
+     *  para todos — só o campo de texto único vs. 4 linhas muda. */
     private fun applyMarqueeMode() {
         val lines = binding.radioModeLines.isChecked
         val big = binding.radioModeBig.isChecked
 
         binding.editMarqueeText.visibility = if (lines) View.GONE else View.VISIBLE
         binding.groupMarqueeLines.visibility = if (lines) View.VISIBLE else View.GONE
-        // No modo 4 linhas o conteúdo é estático: não há velocidade de passo.
-        binding.editMarqueeSpeed.visibility = if (lines) View.GONE else View.VISIBLE
         binding.textMarqueeError.visibility = View.GONE
 
-        binding.editMarqueeSpeed.setHint(
-            if (big) R.string.hint_marquee_speed_big else R.string.hint_marquee_speed
-        )
         binding.textMarqueeHelp.text = getString(
             when {
                 lines -> R.string.marquee_help_lines
@@ -148,7 +145,7 @@ class MainActivity : AppCompatActivity() {
                 return
             }
             binding.textMarqueeError.visibility = View.GONE
-            ble.writeMarqueeLines(lines, duration)
+            ble.writeMarqueeLines(lines, duration, speed)
             return
         }
 

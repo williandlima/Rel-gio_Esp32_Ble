@@ -369,14 +369,15 @@ class BleManager(private val context: Context) {
         write(CHAR_MARQUEE, json)
     }
 
-    /** Modo 4 linhas: conteúdo fixo, um campo por linha do display. */
-    fun writeMarqueeLines(lines: List<String>, durationS: Int) {
+    /** Modo 4 linhas: cada campo rola de forma independente na sua linha. */
+    fun writeMarqueeLines(lines: List<String>, durationS: Int, speedMs: Int) {
         val array = JSONArray()
         lines.forEach { array.put(toDisplayableAscii(it)) }
         val json = JSONObject()
             .put("mode", "lines")
             .put("lines", array)
             .put("duration_s", durationS)
+            .put("speed_ms", speedMs)
             .toString()
         write(CHAR_MARQUEE, json)
     }

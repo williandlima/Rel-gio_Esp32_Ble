@@ -72,10 +72,14 @@ como o RTC interno não tem bateria, ao ligar o relógio começa em
      pelo epoch Unix atual) — o Shell do Thonny deve mostrar
      `SetDateTime recebido, RTC ajustado: (...)` e a hora no display muda.
    - **Marquee** (write): envie `{"text": "Bom dia!", "duration_s": 30, "speed_ms": 300}`
-     — o display muda pro Modo Letreiro na hora: o texto rola nas 4 linhas
-     por `duration_s` segundos, depois volta sozinho pro Modo Normal.
-     Para cancelar antes do tempo acabar, envie `{"text": ""}` ou
-     `{"duration_s": 0}`.
+     — o display muda pro Modo Letreiro na hora: o texto rola nas 4 linhas,
+     entrando pela direita e saindo pela esquerda, por `duration_s`
+     segundos, depois volta sozinho pro Modo Normal. Para cancelar antes
+     do tempo acabar, envie `{"text": ""}` ou `{"duration_s": 0}`.
+     Existem mais dois modos, ligados pelo campo `"mode"` — `"lines"`
+     (4 campos, um por linha, cada um rolando por conta própria) e
+     `"big"` (texto ampliado em blocos, ocupando as 4 linhas). Detalhes
+     e exemplos de payload no `SPECS.md`, seção 4.2.
    - **Config** (read/write): leia o valor atual (`{"temp_unit": "C"}`) ou
      escreva um novo.
    - **Status** (read/notify): ative notificações — a cada ~5s deve chegar

@@ -55,11 +55,15 @@ firmware com BLE ativo), anunciando como **"Relogio-ESP32"**.
    local do celular, ao contrário do teste manual anterior via nRF Connect
    que usava UTC puro).
 5. Escolha o **modo do letreiro** no seletor de três segmentos e preencha
-   os campos que aparecerem:
-   - **Rolagem**: um texto rolando nas 4 linhas (velocidade = ms por passo).
-   - **4 linhas**: um campo por linha do display, conteúdo parado.
-   - **Ampliado**: um caractere por vez, gigante, ocupando as 4 linhas
-     (velocidade = ms por caractere, mínimo 200).
+   os campos que aparecerem. Os três rolam da direita para a esquerda —
+   entrando pela última coluna do display e saindo pela primeira — no
+   mesmo ritmo configurado em "Velocidade (ms por passo)":
+   - **Rolagem**: um texto só, as 4 linhas mostram o mesmo conteúdo.
+   - **4 linhas**: um campo por linha do display, cada linha rolando de
+     forma independente (podem ter tamanhos diferentes).
+   - **Ampliado**: o texto em blocos gigantes ocupando as 4 linhas,
+     deslizando pixel a pixel — como um letreiro de LED, sem trocar de
+     letra inteira de uma vez.
 
    Toque em **"Enviar letreiro"** — o display muda na hora e volta sozinho
    ao Modo Normal quando a duração acabar; **"Parar letreiro"** interrompe

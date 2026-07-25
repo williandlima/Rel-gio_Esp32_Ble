@@ -27,7 +27,6 @@
     <string name="hint_marquee_text">Texto do letreiro</string>
     <string name="hint_marquee_duration">Duração (segundos)</string>
     <string name="hint_marquee_speed">Velocidade (ms por passo)</string>
-    <string name="hint_marquee_speed_big">Tempo por caractere (ms)</string>
     <string name="hint_line_1">Linha 1</string>
     <string name="hint_line_2">Linha 2</string>
     <string name="hint_line_3">Linha 3</string>
@@ -38,9 +37,9 @@
     <string name="button_stop_marquee">Parar letreiro</string>
     <string name="marquee_state_on">● Letreiro no ar</string>
     <string name="marquee_state_off">○ Letreiro parado</string>
-    <string name="marquee_help_scroll">O texto rola nas 4 linhas pelo tempo configurado e depois volta sozinho ao Modo Normal.</string>
-    <string name="marquee_help_lines">Cada campo vai para uma linha do display, parado, pelo tempo configurado. Cada linha comporta 20 caracteres.</string>
-    <string name="marquee_help_big">Um caractere por vez, ampliado ocupando as 4 linhas. Use textos curtos — o tempo é por caractere, com mínimo de 200 ms.</string>
+    <string name="marquee_help_scroll">O texto rola nas 4 linhas, entrando pela direita e saindo pela esquerda, pelo tempo configurado, e depois volta sozinho ao Modo Normal.</string>
+    <string name="marquee_help_lines">Cada campo rola de forma independente na sua linha, entrando pela direita e saindo pela esquerda, pelo tempo configurado.</string>
+    <string name="marquee_help_big">O texto passa ampliado, ocupando as 4 linhas, entrando pela direita e saindo pela esquerda — como um letreiro de LED.</string>
     <string name="marquee_help_accents">Acentos são removidos no envio: o display não tem esses caracteres.</string>
 
     <string name="section_config">Configurações</string>

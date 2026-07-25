@@ -85,14 +85,19 @@ Linha 4: [status BLE / livre]   <- indicador de conexão BLE, ou em branco
 
 - Ativado quando o app envia uma mensagem via BLE.
 - Ocupa as 4 linhas do display por completo, em um de **três modos**
-  (detalhes de payload na seção 4.2):
-  1. **Rolagem** — texto único com scroll horizontal contínuo nas 4 linhas.
-  2. **4 linhas** — quatro campos fixos, um por linha do display.
-  3. **Ampliado** — um caractere por vez, desenhado em blocos ocupando as
-     4 linhas, avançando no ritmo configurado.
+  (detalhes de payload na seção 4.2). Nos três, o conteúdo **rola
+  continuamente da direita para a esquerda** — entra pela última coluna
+  e sai pela primeira — na mesma granularidade de 1 coluna do display
+  por passo:
+  1. **Rolagem** — texto único, as 4 linhas mostram o mesmo conteúdo.
+  2. **4 linhas** — quatro campos, um por linha do display, cada um
+     rolando de forma independente (podem ter tamanhos diferentes).
+  3. **Ampliado** — o texto desenhado em blocos ampliados ocupando as
+     4 linhas, rolando em resolução de pixel (não troca letra inteira de
+     uma vez — desliza como um letreiro de LED).
 - Parâmetros configuráveis pelo app: **modo**, **texto** (ou as 4 linhas),
-  **duração total** (segundos) e **velocidade** (ms por passo na rolagem,
-  ms por caractere no ampliado).
+  **duração total** (segundos) e **velocidade** (ms por passo/coluna,
+  igual nos três modos).
 - Apenas **uma mensagem ativa** por vez — uma nova mensagem recebida
   substitui a anterior e reinicia a contagem de duração.
 - Ao expirar a duração configurada, o firmware **volta automaticamente**
@@ -157,18 +162,26 @@ Serviço: `8da7ea58-d7a9-4740-899d-e790d280bbec`
 
 | `mode` | Conteúdo | Payload |
 |---|---|---|
-| `scroll` (padrão) | Texto único rolando nas 4 linhas | `{"mode":"scroll","text":"Bom dia!","duration_s":30,"speed_ms":300}` |
-| `lines` | 4 campos fixos, um por linha do display | `{"mode":"lines","lines":["L1","L2","L3","L4"],"duration_s":30}` |
-| `big` | Um caractere por vez, ampliado nas 4 linhas | `{"mode":"big","text":"OI","duration_s":30,"speed_ms":600}` |
+| `scroll` (padrão) | Texto único, as 4 linhas rolam iguais | `{"mode":"scroll","text":"Bom dia!","duration_s":30,"speed_ms":300}` |
+| `lines` | 4 campos, cada linha rola de forma independente | `{"mode":"lines","lines":["L1","L2","L3","L4"],"duration_s":30,"speed_ms":300}` |
+| `big` | Texto ampliado ocupando as 4 linhas, rolando em pixel | `{"mode":"big","text":"OI","duration_s":30,"speed_ms":50}` |
 
 - Payload **sem** o campo `mode` cai em `scroll`, então o formato antigo
   continua válido.
+- Os três modos rolam continuamente da direita para a esquerda — entra
+  pela última coluna do display, sai pela primeira — com `speed_ms`
+  valendo como o tempo entre cada passo de 1 coluna, igual nos três
+  (piso de 50 ms). Não existe mais "aparecer estático" nem "trocar letra
+  inteira de uma vez": os três modos usam o mesmo mecanismo de janela
+  deslizante (ver `clock_app._render_show`), cada um com seu próprio
+  conteúdo de origem — texto simples, os 4 campos, ou a tira de pixels
+  do modo ampliado.
 - Em `lines`, entradas faltando ou de tipo errado viram linha vazia; se
-  todas ficarem vazias, equivale a cancelar. Cada linha comporta 20
-  caracteres (o excedente é cortado pelo driver do display).
-- Em `big`, `speed_ms` é o tempo **por caractere**, com piso de 200 ms. Os
-  glifos vêm de `firmware/bigfont.py` (matriz 4x5 escalada 4x, preenchendo
-  exatamente as 20 colunas). Caracteres sem glifo próprio caem em `?`. O
+  todas ficarem vazias, equivale a cancelar. Sem limite de 20 caracteres
+  por linha — texto mais longo simplesmente rola por mais tempo antes de
+  repetir.
+- Em `big`, os glifos vêm de `firmware/bigfont.py` (matriz 4x5 escalada
+  4x, um caractere ocupa exatamente as 20 colunas quando parado). O
   "pixel aceso" é um caractere gravado na CGRAM do próprio HD44780 no
   boot (`lcd.create_char`), e não uma posição da ROM de caracteres — a
   posição usada na primeira versão (0xFF) não é um bloco sólido em todas
@@ -273,6 +286,10 @@ realmente rodando no ESP32/celular durante os testes:
   "1.6-modos-letreiro"` no app.
 - Correção do Modo Ampliado (bloco ilegível na bancada): `lcd_hd44780 v3`
   (bloco via CGRAM) e `bigfont v2`.
+- Letreiro passa a rolar da direita para a esquerda em todos os modos, e
+  o Ampliado desliza em pixel (não troca letra inteira de uma vez):
+  `clock_app v3` e `bigfont v3` no firmware; `versionCode 8` /
+  `versionName "1.7-letreiro-rolagem"` no app.
 
 ## 9. Revisão de Código — Correções Aplicadas
 

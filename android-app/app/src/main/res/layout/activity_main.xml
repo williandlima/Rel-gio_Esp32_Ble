@@ -203,32 +203,28 @@
                 style="@style/InputField"
                 android:layout_marginTop="@dimen/space_m"
                 android:hint="@string/hint_line_1"
-                android:inputType="text"
-                android:maxLength="20" />
+                android:inputType="text" />
 
             <EditText
                 android:id="@+id/editLine2"
                 style="@style/InputField"
                 android:layout_marginTop="@dimen/space_xs"
                 android:hint="@string/hint_line_2"
-                android:inputType="text"
-                android:maxLength="20" />
+                android:inputType="text" />
 
             <EditText
                 android:id="@+id/editLine3"
                 style="@style/InputField"
                 android:layout_marginTop="@dimen/space_xs"
                 android:hint="@string/hint_line_3"
-                android:inputType="text"
-                android:maxLength="20" />
+                android:inputType="text" />
 
             <EditText
                 android:id="@+id/editLine4"
                 style="@style/InputField"
                 android:layout_marginTop="@dimen/space_xs"
                 android:hint="@string/hint_line_4"
-                android:inputType="text"
-                android:maxLength="20" />
+                android:inputType="text" />
         </LinearLayout>
 
         <TextView

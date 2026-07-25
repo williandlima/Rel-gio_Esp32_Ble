@@ -11,8 +11,8 @@ android {
         applicationId = "com.relogioesp32.ble"
         minSdk = 26
         targetSdk = 34
-        versionCode = 7
-        versionName = "1.6-modos-letreiro"
+        versionCode = 8
+        versionName = "1.7-letreiro-rolagem"
     }
 
     buildTypes {

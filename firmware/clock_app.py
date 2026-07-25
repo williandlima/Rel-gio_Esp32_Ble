@@ -23,7 +23,7 @@ import bigfont
 from lcd_hd44780 import LCD4Bit
 from ble_service import ClockBLEService
 
-VERSION = "clock_app v2 (3 modos de letreiro)"
+VERSION = "clock_app v3 (letreiro rola em todos os modos)"
 
 # Modos do letreiro (campo "mode" do payload Marquee — ver SPECS.md 4.2).
 # Payload sem "mode" cai em MODE_SCROLL, que é o comportamento original.
@@ -45,8 +45,7 @@ _LOOP_SLEEP_MS = 20        # granularidade do laço: BLE responde em ~20ms
 _TEMP_REFRESH_MS = 5000
 _STATUS_REFRESH_MS = 5000
 _SENSOR_RESCAN_MS = 30000  # tenta redetectar um sensor ligado depois
-_MIN_SPEED_MS = 50
-_MIN_BIG_SPEED_MS = 200    # abaixo disso o caractere ampliado nem dá pra ler
+_MIN_SPEED_MS = 50         # ms por passo (1 coluna do display), em qualquer modo
 _MAX_DURATION_S = 3600
 _BIG_SCALE = 4             # 5 colunas do glifo x 4 = 20 colunas do display
 
@@ -118,16 +117,21 @@ class ClockApp:
         self._last_second = None
 
         # Estado do letreiro. _show_mode = None significa Modo Normal.
+        # Nos três modos o conteúdo é representado como até 4 "fitas" de
+        # texto (uma por linha do display), cada uma rolando da direita
+        # para a esquerda por conta própria — no modo Rolagem as 4 fitas
+        # são idênticas; no modo 4 Linhas, cada uma vem de um campo; no
+        # modo Ampliado, cada uma é a tira de pixels de uma linha do glifo
+        # (ver bigfont.render_strip). Isso unifica a renderização dos três
+        # modos num único método (_render_show).
         self._show_mode = None
         self._show_start = 0
         self._show_duration_ms = 0
         self._show_speed_ms = 300
         self._show_last_step = 0
-        self._scroll_padded = ""
-        self._scroll_offset = 0
-        self._static_lines = []
-        self._big_text = ""
-        self._big_index = 0
+        self._row_texts = [""] * config.LCD_ROWS
+        self._row_lengths = [0] * config.LCD_ROWS
+        self._row_offsets = [0] * config.LCD_ROWS
 
         self._ble = ClockBLEService(name="Relogio-ESP32")
         self._ble.on_set_datetime = self._handle_set_datetime
@@ -227,42 +231,20 @@ class ClockApp:
             print("Modo Letreiro expirado, voltando ao Modo Normal")
             return
 
-        if self._show_mode == MODE_LINES:
-            # Conteúdo fixo: o cache do LCD faz as repetições saírem de graça.
-            self._render_static_lines()
-            return
-
         if ticks_diff(now, self._show_last_step) < self._show_speed_ms:
             return
         self._show_last_step = now
 
-        if self._show_mode == MODE_BIG:
-            self._render_big_step()
-        else:
-            self._render_scroll_step()
-
-    def _render_scroll_step(self):
         cols = config.LCD_COLS
-        text = self._scroll_padded
-        window = text[self._scroll_offset:self._scroll_offset + cols]
-        if len(window) < cols:
-            window += text[: cols - len(window)]
         for row in range(config.LCD_ROWS):
+            text = self._row_texts[row]
+            length = self._row_lengths[row]
+            offset = self._row_offsets[row]
+            window = text[offset:offset + cols]
+            if len(window) < cols:
+                window += text[: cols - len(window)]
             self._lcd.write_line(window, row)
-        self._scroll_offset = (self._scroll_offset + 1) % len(text)
-
-    def _render_static_lines(self):
-        for row in range(config.LCD_ROWS):
-            text = self._static_lines[row] if row < len(self._static_lines) else ""
-            self._lcd.write_line(text, row)
-
-    def _render_big_step(self):
-        ch = self._big_text[self._big_index]
-        lines = bigfont.render(ch, cols=config.LCD_COLS,
-                               rows=config.LCD_ROWS, scale=_BIG_SCALE)
-        for row in range(config.LCD_ROWS):
-            self._lcd.write_line(lines[row], row)
-        self._big_index = (self._big_index + 1) % len(self._big_text)
+            self._row_offsets[row] = (offset + 1) % length
 
     def _stop_show(self):
         self._show_mode = None
@@ -322,28 +304,37 @@ class ClockApp:
             return
 
         duration_s = min(duration_s, _MAX_DURATION_S)
+        speed_ms = max(speed_ms, _MIN_SPEED_MS)
         cols = config.LCD_COLS
+        pad = " " * cols
 
         if mode == MODE_LINES:
-            self._static_lines = content
-            speed_ms = 0
+            # Cada linha rola de forma independente (fitas de comprimentos
+            # diferentes), mas todas avançam no mesmo ritmo (_show_speed_ms).
+            row_texts = [pad + line + pad for line in content]
         elif mode == MODE_BIG:
-            self._big_text = content
-            self._big_index = 0
-            speed_ms = max(speed_ms, _MIN_BIG_SPEED_MS)
+            # Uma fita de pixels por linha do display, construída pela
+            # fonte de blocos - rola exatamente como o texto normal, só que
+            # em resolução de pixel em vez de caractere.
+            row_texts = [pad + strip + pad
+                        for strip in bigfont.render_strip(content, scale=_BIG_SCALE)]
         else:
             # Espaços do tamanho do display nas pontas, para o texto entrar
-            # e sair de cena em vez de "pular" direto na tela.
-            self._scroll_padded = (" " * cols) + content + (" " * cols)
-            self._scroll_offset = 0
-            speed_ms = max(speed_ms, _MIN_SPEED_MS)
+            # e sair de cena em vez de "pular" direto na tela. As 4 linhas
+            # mostram o mesmo texto, todas na mesma posição de rolagem.
+            padded = pad + content + pad
+            row_texts = [padded] * config.LCD_ROWS
+
+        self._row_texts = row_texts
+        self._row_lengths = [len(t) for t in row_texts]
+        self._row_offsets = [0] * config.LCD_ROWS
 
         self._show_mode = mode
         self._show_speed_ms = speed_ms
         self._show_duration_ms = duration_s * 1000
         self._show_start = ticks_ms()
         # ticks_add (e não subtração crua) por causa do wrap de ticks_ms.
-        self._show_last_step = ticks_add(ticks_ms(), -max(speed_ms, 1))
+        self._show_last_step = ticks_add(ticks_ms(), -speed_ms)
         self._push_status()
         print("Modo Letreiro ativado:", mode, "|", content,
               "|", duration_s, "s @", speed_ms, "ms")
