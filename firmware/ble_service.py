@@ -58,6 +58,13 @@ class ClockBLEService:
         self.on_marquee = None
         self.on_config_write = None
 
+        # Buffers de remontagem por característica: alguns celulares/stacks
+        # não respeitam o MTU negociado e enviam o write já fragmentado em
+        # pedaços de ~20 bytes, cada um gerando seu próprio evento
+        # _IRQ_GATTS_WRITE. Acumulamos os bytes por handle e só despachamos
+        # quando o conteúdo acumulado já forma um JSON completo.
+        self._write_buffers = {}
+
         self._advertise(name)
 
     def _irq(self, event, data):
@@ -67,27 +74,35 @@ class ClockBLEService:
         elif event == _IRQ_CENTRAL_DISCONNECT:
             conn_handle, _, _ = data
             self._connections.discard(conn_handle)
+            self._write_buffers.clear()
             self._advertise()
         elif event == _IRQ_GATTS_WRITE:
             conn_handle, value_handle = data
             raw = self._ble.gatts_read(value_handle)
-            print("BLE write recebido, bytes brutos:", raw)
             if value_handle == self._handle_set_datetime:
-                self._dispatch_json(raw, self.on_set_datetime)
+                self._dispatch_json(value_handle, raw, self.on_set_datetime)
             elif value_handle == self._handle_marquee:
-                self._dispatch_json(raw, self.on_marquee)
+                self._dispatch_json(value_handle, raw, self.on_marquee)
             elif value_handle == self._handle_config:
-                self._dispatch_json(raw, self.on_config_write)
+                self._dispatch_json(value_handle, raw, self.on_config_write)
 
-    def _dispatch_json(self, raw, callback):
-        if callback is None:
-            return
+    def _dispatch_json(self, value_handle, raw, callback):
+        buf = self._write_buffers.get(value_handle, b"") + raw
         try:
-            data = json.loads(raw)
+            data = json.loads(buf)
         except ValueError:
-            print("Payload BLE invalido (nao e JSON valido):", raw)
+            if len(buf) > 512:
+                print("Payload BLE invalido/incompleto demais, descartando:", buf)
+                self._write_buffers.pop(value_handle, None)
+            else:
+                # Ainda incompleto - provavelmente falta mais um pedaço,
+                # guarda e aguarda o proximo evento de escrita.
+                self._write_buffers[value_handle] = buf
             return
-        callback(data)
+        self._write_buffers.pop(value_handle, None)
+        print("BLE write completo recebido:", buf)
+        if callback:
+            callback(data)
 
     def set_status(self, status_dict):
         payload = json.dumps(status_dict).encode()
