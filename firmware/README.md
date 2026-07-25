@@ -80,6 +80,13 @@ via BLE (etapa 4 do roadmap).
    - **Status** (read/notify): ative notificações — a cada ~5s deve chegar
      um JSON com `temp_c` atualizado.
 
+**Sem o sensor DS18B20 conectado?** Use `test_ble_sem_sensor.py` no lugar de
+`test_ble.py` (suba `config.py`, `lcd_hd44780.py`, `ble_service.py` e
+`test_ble_sem_sensor.py` — não precisa do `ds18b20_sensor.py`). Funciona
+igual, só sem leitura de temperatura (linha 3 do display mostra um aviso,
+e o Status não inclui `temp_c`). É temporário — a versão completa
+(`test_ble.py`) continua sendo a "oficial" do projeto.
+
 ## Pinagem usada (ver `config.py` / `SPECS.md` seção 2.2)
 
 | Sinal | GPIO |
