@@ -13,16 +13,24 @@
 # storage.py, clock_app.py (+ ds18b20_sensor.py, se houver sensor).
 
 from machine import RTC
-from utime import sleep_ms, ticks_ms, ticks_add, ticks_diff, localtime, mktime
+from utime import sleep_ms, ticks_ms, ticks_add, ticks_diff, localtime
 
 import config
 import lcd_hd44780
 import ble_service
 import storage
+import bigfont
 from lcd_hd44780 import LCD4Bit
 from ble_service import ClockBLEService
 
-VERSION = "clock_app v1"
+VERSION = "clock_app v2 (3 modos de letreiro)"
+
+# Modos do letreiro (campo "mode" do payload Marquee — ver SPECS.md 4.2).
+# Payload sem "mode" cai em MODE_SCROLL, que é o comportamento original.
+MODE_SCROLL = "scroll"   # texto único rolando nas 4 linhas
+MODE_LINES = "lines"     # 4 campos fixos, um por linha do display
+MODE_BIG = "big"         # um caractere por vez, ampliado nas 4 linhas
+_MODES = (MODE_SCROLL, MODE_LINES, MODE_BIG)
 
 _WEEKDAYS = ("Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom")
 
@@ -38,7 +46,9 @@ _TEMP_REFRESH_MS = 5000
 _STATUS_REFRESH_MS = 5000
 _SENSOR_RESCAN_MS = 30000  # tenta redetectar um sensor ligado depois
 _MIN_SPEED_MS = 50
+_MIN_BIG_SPEED_MS = 200    # abaixo disso o caractere ampliado nem dá pra ler
 _MAX_DURATION_S = 3600
+_BIG_SCALE = 3             # cada coluna do glifo vira 3 colunas do display
 
 
 def _as_int(value, default):
@@ -58,14 +68,20 @@ def _sanitize(text):
     return "".join(out)
 
 
+# Tabela do algoritmo de Sakamoto (deslocamento de cada mês).
+_SAKAMOTO = (0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4)
+
+
 def _weekday_name(year, month, day):
-    # Calculado a partir da data, e não do campo weekday devolvido pelo RTC:
-    # a porta ESP32 recalcula esse campo por conta própria e a convenção
-    # (base 0 ou base 1) varia entre versões do firmware MicroPython.
-    try:
-        return _WEEKDAYS[localtime(mktime((year, month, day, 0, 0, 0, 0, 0)))[6]]
-    except Exception:
+    # Calculado por aritmética a partir da data, e não pelo campo weekday do
+    # RTC (a porta ESP32 recalcula esse campo sozinha e a convenção varia
+    # entre versões) nem por mktime/localtime (cuja assinatura difere entre
+    # MicroPython e CPython). Assim o resultado é o mesmo em qualquer lugar.
+    if month < 1 or month > 12:
         return "---"
+    y = year - 1 if month < 3 else year
+    weekday_sun0 = (y + y // 4 - y // 100 + y // 400 + _SAKAMOTO[month - 1] + day) % 7
+    return _WEEKDAYS[(weekday_sun0 + 6) % 7]  # converte para 0=segunda
 
 
 class ClockApp:
@@ -86,7 +102,8 @@ class ClockApp:
 
         self._sensor, sensor_version = self._init_sensor()
         print("Modulos carregados:", config.VERSION, "|", lcd_hd44780.VERSION,
-              "|", ble_service.VERSION, "|", storage.VERSION, "|", sensor_version)
+              "|", ble_service.VERSION, "|", storage.VERSION,
+              "|", bigfont.VERSION, "|", sensor_version)
 
         self._temp_unit = storage.load_temp_unit()
         self._last_temp_c = None
@@ -95,13 +112,17 @@ class ClockApp:
         self._last_status_ticks = ticks_ms()
         self._last_second = None
 
-        self._marquee_active = False
-        self._marquee_padded = ""
-        self._marquee_offset = 0
-        self._marquee_speed_ms = 300
-        self._marquee_duration_ms = 0
-        self._marquee_start = 0
-        self._marquee_last_scroll = 0
+        # Estado do letreiro. _show_mode = None significa Modo Normal.
+        self._show_mode = None
+        self._show_start = 0
+        self._show_duration_ms = 0
+        self._show_speed_ms = 300
+        self._show_last_step = 0
+        self._scroll_padded = ""
+        self._scroll_offset = 0
+        self._static_lines = []
+        self._big_text = ""
+        self._big_index = 0
 
         self._ble = ClockBLEService(name="Relogio-ESP32")
         self._ble.on_set_datetime = self._handle_set_datetime
@@ -135,10 +156,10 @@ class ClockApp:
     def _loop_once(self):
         self._ble.tick()
         self._service_temperature()
-        if self._marquee_active:
-            self._render_marquee()
-        else:
+        if self._show_mode is None:
             self._render_clock()
+        else:
+            self._render_show()
         self._service_status()
         sleep_ms(_LOOP_SLEEP_MS)
 
@@ -194,27 +215,52 @@ class ClockApp:
         self._lcd.write_line(self._temp_text(), row=2)
         self._lcd.write_line("Relogio ESP32 BLE", row=3)
 
-    def _render_marquee(self):
+    def _render_show(self):
         now = ticks_ms()
-        if ticks_diff(now, self._marquee_start) >= self._marquee_duration_ms:
-            self._stop_marquee()
+        if ticks_diff(now, self._show_start) >= self._show_duration_ms:
+            self._stop_show()
             print("Modo Letreiro expirado, voltando ao Modo Normal")
             return
-        if ticks_diff(now, self._marquee_last_scroll) < self._marquee_speed_ms:
-            return
-        self._marquee_last_scroll = now
 
+        if self._show_mode == MODE_LINES:
+            # Conteúdo fixo: o cache do LCD faz as repetições saírem de graça.
+            self._render_static_lines()
+            return
+
+        if ticks_diff(now, self._show_last_step) < self._show_speed_ms:
+            return
+        self._show_last_step = now
+
+        if self._show_mode == MODE_BIG:
+            self._render_big_step()
+        else:
+            self._render_scroll_step()
+
+    def _render_scroll_step(self):
         cols = config.LCD_COLS
-        text = self._marquee_padded
-        window = text[self._marquee_offset:self._marquee_offset + cols]
+        text = self._scroll_padded
+        window = text[self._scroll_offset:self._scroll_offset + cols]
         if len(window) < cols:
             window += text[: cols - len(window)]
         for row in range(config.LCD_ROWS):
             self._lcd.write_line(window, row)
-        self._marquee_offset = (self._marquee_offset + 1) % len(text)
+        self._scroll_offset = (self._scroll_offset + 1) % len(text)
 
-    def _stop_marquee(self):
-        self._marquee_active = False
+    def _render_static_lines(self):
+        for row in range(config.LCD_ROWS):
+            text = self._static_lines[row] if row < len(self._static_lines) else ""
+            self._lcd.write_line(text, row)
+
+    def _render_big_step(self):
+        ch = self._big_text[self._big_index]
+        lines = bigfont.render(ch, cols=config.LCD_COLS,
+                               rows=config.LCD_ROWS, scale=_BIG_SCALE)
+        for row in range(config.LCD_ROWS):
+            self._lcd.write_line(lines[row], row)
+        self._big_index = (self._big_index + 1) % len(self._big_text)
+
+    def _stop_show(self):
+        self._show_mode = None
         self._last_second = None  # força redesenho do relógio
         self._push_status()
 
@@ -227,9 +273,11 @@ class ClockApp:
     def _push_status(self):
         self._last_status_ticks = ticks_ms()
         status = {
-            "mode": "marquee" if self._marquee_active else "normal",
+            "mode": "normal" if self._show_mode is None else "marquee",
             "connected": self._ble.is_connected(),
         }
+        if self._show_mode is not None:
+            status["marquee_mode"] = self._show_mode
         if self._last_temp_c is not None:
             status["temp_c"] = round(self._last_temp_c, 1)
         self._ble.set_status(status)
@@ -248,37 +296,64 @@ class ClockApp:
         print("SetDateTime recebido, RTC ajustado:", self._rtc.datetime())
 
     def _handle_marquee(self, data):
-        text = data.get("text", "")
-        if not isinstance(text, str):
-            text = ""
-        text = _sanitize(text)
+        mode = data.get("mode", MODE_SCROLL)
+        if mode not in _MODES:
+            mode = MODE_SCROLL
 
         duration_s = _as_int(data.get("duration_s"), 30)
         speed_ms = _as_int(data.get("speed_ms"), 300)
 
-        # Texto vazio ou duração não-positiva = pedido de cancelamento.
-        if not text or duration_s <= 0:
-            if self._marquee_active:
-                self._stop_marquee()
+        if mode == MODE_LINES:
+            content = self._prepare_lines(data)
+        else:
+            content = _sanitize(data.get("text", "")
+                                if isinstance(data.get("text"), str) else "")
+
+        # Conteúdo vazio ou duração não-positiva = pedido de cancelamento.
+        if not content or duration_s <= 0:
+            if self._show_mode is not None:
+                self._stop_show()
             print("Letreiro cancelado pelo app.")
             return
 
         duration_s = min(duration_s, _MAX_DURATION_S)
-        speed_ms = max(speed_ms, _MIN_SPEED_MS)
-
         cols = config.LCD_COLS
-        # Espaços do tamanho do display nas pontas, para o texto entrar e
-        # sair de cena em vez de "pular" direto na tela.
-        self._marquee_padded = (" " * cols) + text + (" " * cols)
-        self._marquee_offset = 0
-        self._marquee_speed_ms = speed_ms
-        self._marquee_duration_ms = duration_s * 1000
-        self._marquee_start = ticks_ms()
+
+        if mode == MODE_LINES:
+            self._static_lines = content
+            speed_ms = 0
+        elif mode == MODE_BIG:
+            self._big_text = content
+            self._big_index = 0
+            speed_ms = max(speed_ms, _MIN_BIG_SPEED_MS)
+        else:
+            # Espaços do tamanho do display nas pontas, para o texto entrar
+            # e sair de cena em vez de "pular" direto na tela.
+            self._scroll_padded = (" " * cols) + content + (" " * cols)
+            self._scroll_offset = 0
+            speed_ms = max(speed_ms, _MIN_SPEED_MS)
+
+        self._show_mode = mode
+        self._show_speed_ms = speed_ms
+        self._show_duration_ms = duration_s * 1000
+        self._show_start = ticks_ms()
         # ticks_add (e não subtração crua) por causa do wrap de ticks_ms.
-        self._marquee_last_scroll = ticks_add(ticks_ms(), -speed_ms)
-        self._marquee_active = True
+        self._show_last_step = ticks_add(ticks_ms(), -max(speed_ms, 1))
         self._push_status()
-        print("Modo Letreiro ativado:", text, duration_s, "s @", speed_ms, "ms")
+        print("Modo Letreiro ativado:", mode, "|", content,
+              "|", duration_s, "s @", speed_ms, "ms")
+
+    def _prepare_lines(self, data):
+        """Normaliza o campo "lines" para exatamente LCD_ROWS strings.
+        Devolve [] se todas vierem vazias (equivale a cancelar)."""
+        raw = data.get("lines")
+        if not isinstance(raw, list):
+            return []
+        lines = []
+        for row in range(config.LCD_ROWS):
+            value = raw[row] if row < len(raw) else ""
+            lines.append(_sanitize(value) if isinstance(value, str) else "")
+        return lines if any(line.strip() for line in lines) else []
 
     def _handle_config_write(self, data):
         unit = data.get("temp_unit")
