@@ -23,7 +23,7 @@ import bigfont
 from lcd_hd44780 import LCD4Bit
 from ble_service import ClockBLEService
 
-VERSION = "clock_app v3 (letreiro rola em todos os modos)"
+VERSION = "clock_app v4 (Modo Ampliado menos exagerado)"
 
 # Modos do letreiro (campo "mode" do payload Marquee — ver SPECS.md 4.2).
 # Payload sem "mode" cai em MODE_SCROLL, que é o comportamento original.
@@ -47,7 +47,11 @@ _STATUS_REFRESH_MS = 5000
 _SENSOR_RESCAN_MS = 30000  # tenta redetectar um sensor ligado depois
 _MIN_SPEED_MS = 50         # ms por passo (1 coluna do display), em qualquer modo
 _MAX_DURATION_S = 3600
-_BIG_SCALE = 4             # 5 colunas do glifo x 4 = 20 colunas do display
+# 5 colunas do glifo x 2 = 10 colunas do display por caractere. Com scale=4
+# (tamanho original) cada caractere ocupava a tela toda e ficava exagerado;
+# em 2 dá pra ver mais de um caractere por vez na janela de 20 colunas,
+# ainda bem maior que o texto normal.
+_BIG_SCALE = 2
 
 
 def _as_int(value, default):

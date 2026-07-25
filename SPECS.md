@@ -181,7 +181,8 @@ Serviço: `8da7ea58-d7a9-4740-899d-e790d280bbec`
   por linha — texto mais longo simplesmente rola por mais tempo antes de
   repetir.
 - Em `big`, os glifos vêm de `firmware/bigfont.py` (matriz 4x5 escalada
-  4x, um caractere ocupa exatamente as 20 colunas quando parado). O
+  2x, ~1,5 caractere visível de cada vez na janela de 20 colunas — maior
+  que o texto normal sem ocupar a tela toda com uma única letra). O
   "pixel aceso" é um caractere gravado na CGRAM do próprio HD44780 no
   boot (`lcd.create_char`), e não uma posição da ROM de caracteres — a
   posição usada na primeira versão (0xFF) não é um bloco sólido em todas
@@ -290,6 +291,8 @@ realmente rodando no ESP32/celular durante os testes:
   o Ampliado desliza em pixel (não troca letra inteira de uma vez):
   `clock_app v3` e `bigfont v3` no firmware; `versionCode 8` /
   `versionName "1.7-letreiro-rolagem"` no app.
+- Modo Ampliado com escala menor (2x em vez de 4x — o tamanho original
+  ficava exagerado): `clock_app v4`.
 
 ## 9. Revisão de Código — Correções Aplicadas
 
