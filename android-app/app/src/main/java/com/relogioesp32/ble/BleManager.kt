@@ -98,9 +98,13 @@ class BleManager(private val context: Context) {
         override fun onConnectionStateChange(g: BluetoothGatt, status: Int, newState: Int) {
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
-                    log("Conectado, descobrindo servicos...")
+                    log("Conectado, solicitando MTU maior...")
                     onConnectionStateChange?.invoke(true)
-                    g.discoverServices()
+                    // MTU padrao (23 bytes) trunca payloads JSON maiores
+                    // (ex: texto do letreiro) - pede um MTU maior antes de
+                    // descobrir os servicos. O ESP32 ja aceita ate 256
+                    // (ver ble_service.py).
+                    g.requestMtu(247)
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     log("Desconectado")
@@ -108,6 +112,12 @@ class BleManager(private val context: Context) {
                     gatt = null
                 }
             }
+        }
+
+        @Suppress("MissingPermission")
+        override fun onMtuChanged(g: BluetoothGatt, mtu: Int, status: Int) {
+            log("MTU negociado: $mtu bytes, descobrindo servicos...")
+            g.discoverServices()
         }
 
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
