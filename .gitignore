@@ -1,0 +1,4 @@
+# Cache de bytecode do Python, gerado ao importar os módulos do firmware
+# durante testes locais (fora do ESP32) — nunca deve ir para o repositório.
+__pycache__/
+*.pyc
