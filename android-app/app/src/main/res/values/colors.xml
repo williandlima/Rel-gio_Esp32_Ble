@@ -23,4 +23,7 @@
     <color name="text_error">#C1512E</color>
     <color name="text_success">#3D7A4D</color>
     <color name="divider">#E1DCD3</color>
+
+    <color name="status_connected_bg">#DCEEE1</color>
+    <color name="status_disconnected_bg">#ECE8E1</color>
 </resources>

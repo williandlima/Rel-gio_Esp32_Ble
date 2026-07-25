@@ -203,3 +203,7 @@ realmente rodando no ESP32/celular durante os testes:
   visuais do botão conectar/desconectar, controles desabilitados até
   conectar, log com rolagem própria): `versionCode 4` / `versionName
   "1.3-ui-polish"`.
+- Cabeçalho com ícone/título/subtítulo e badge de status (verde
+  "Conectado" / cinza "Desconectado" / "Conectando..."), e resumo de
+  configuração + "Ver JSON" lado a lado, conforme print de referência
+  mais detalhado: `versionCode 5` / `versionName "1.4-header-status"`.

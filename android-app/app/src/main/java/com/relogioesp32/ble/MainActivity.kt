@@ -160,6 +160,9 @@ class MainActivity : AppCompatActivity() {
         binding.buttonConnect.text = "Conectar ao Relogio-ESP32"
         binding.buttonConnect.setBackgroundResource(R.drawable.bg_button_navy)
         binding.buttonConnect.setTextColor(getColor(R.color.primary_navy_text))
+        binding.textConnectionBadge.text = "○ Desconectado"
+        binding.textConnectionBadge.setBackgroundResource(R.drawable.bg_status_pill_disconnected)
+        binding.textConnectionBadge.setTextColor(getColor(R.color.text_label))
         setBleControlsEnabled(false)
     }
 
@@ -169,6 +172,9 @@ class MainActivity : AppCompatActivity() {
         binding.buttonConnect.text = "Conectando..."
         binding.buttonConnect.setBackgroundResource(R.drawable.bg_button_muted)
         binding.buttonConnect.setTextColor(getColor(R.color.muted_text))
+        binding.textConnectionBadge.text = "Conectando..."
+        binding.textConnectionBadge.setBackgroundResource(R.drawable.bg_status_pill_muted)
+        binding.textConnectionBadge.setTextColor(getColor(R.color.muted_text))
     }
 
     private fun setConnectedState() {
@@ -177,6 +183,9 @@ class MainActivity : AppCompatActivity() {
         binding.buttonConnect.text = "Desconectar"
         binding.buttonConnect.setBackgroundResource(R.drawable.bg_button_taupe)
         binding.buttonConnect.setTextColor(getColor(R.color.taupe_text))
+        binding.textConnectionBadge.text = "● Conectado"
+        binding.textConnectionBadge.setBackgroundResource(R.drawable.bg_status_pill_connected)
+        binding.textConnectionBadge.setTextColor(getColor(R.color.text_success))
         setBleControlsEnabled(true)
     }
 
