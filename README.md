@@ -22,8 +22,8 @@ Seguindo o roadmap incremental definido no `SPECS.md` (seção 7):
 - [x] 1. Display — driver LCD 4-bit validado em bancada
 - [x] 2. RTC interno + Temperatura — Modo Normal completo, validado em bancada (`main.py` autônomo)
 - [x] 3. Esqueleto do serviço BLE — validado (SetDateTime ajustando o RTC via Bluetooth)
-- [ ] 4. App Android — código pronto (`android-app/`), aguardando build/teste no Android Studio
-- [ ] 5. Modo Letreiro
+- [x] 4. App Android — validado, conectando e conversando via BLE com o firmware
+- [x] 5. Modo Letreiro — scroll + duração funcionando de ponta a ponta (app → BLE → display)
 - [ ] 6. Persistência (NVS) e revisão final
 
 ## Estrutura
