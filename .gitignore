@@ -2,3 +2,7 @@
 # durante testes locais (fora do ESP32) — nunca deve ir para o repositório.
 __pycache__/
 *.pyc
+
+# Pacotes gerados por firmware/tools/package.py — artefato de build,
+# regeneravel a qualquer momento, não precisa ir para o histórico do Git.
+firmware/dist/

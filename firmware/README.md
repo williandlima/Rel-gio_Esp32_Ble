@@ -1,5 +1,47 @@
 # Firmware — Relogio_Esp32_Ble (MicroPython)
 
+## Instalação em um passo só (recomendado)
+
+Depois que o hardware já está validado (etapas 1 e 2 abaixo), não precisa
+mais abrir o Thonny e arrastar arquivo por arquivo toda vez que algo
+mudar no firmware — `firmware/tools/` tem um empacotador e um instalador
+que fazem isso com um comando só, no seu computador (não no ESP32).
+
+Requisito único (uma vez só): `pip install mpremote`.
+
+1. Feche o Thonny (ou qualquer outro programa com a porta serial aberta —
+   só um programa por vez consegue falar com o ESP32).
+2. Se não souber o nome da porta:
+   ```bash
+   python3 firmware/tools/install.py --list
+   ```
+3. Instale (troque `COM5` pela porta do seu ESP32 — no Windows costuma
+   ser `COM` + um número; no Mac/Linux, algo como `/dev/tty.usbserial-...`
+   ou `/dev/ttyUSB0`). Sem informar a porta, o script tenta descobrir
+   sozinho:
+   ```bash
+   python3 firmware/tools/install.py COM5
+   ```
+4. O script copia os 8 arquivos que compõem o relógio (`config.py`,
+   `lcd_hd44780.py`, `ds18b20_sensor.py`, `bigfont.py`, `ble_service.py`,
+   `storage.py`, `clock_app.py`, `main.py`) e reinicia o ESP32 sozinho —
+   o relógio já sobe rodando, sem precisar apertar RESET nem abrir o
+   Thonny.
+
+Pra guardar uma versão específica como backup (ex: antes de testar uma
+mudança arriscada), gere um pacote `.zip` com as versões de cada arquivo
+registradas num `MANIFEST.txt`:
+```bash
+python3 firmware/tools/package.py
+```
+Isso cria `firmware/dist/relogio-esp32-firmware-<data>.zip` (a pasta
+`dist/` não vai para o Git — é um artefato gerado, refaça quando quiser).
+
+As seções abaixo continuam valendo para quem está testando um pedaço do
+firmware de cada vez (display sozinho, RTC sozinho, etc.) direto no
+Thonny, com F5 e o Shell interativo — útil pra depurar, não só pra
+instalar a versão final.
+
 ## Como testar o display (etapa 1 do roadmap)
 
 1. No Thonny: `Ferramentas > Opções > Interpretador`, selecione
@@ -102,6 +144,7 @@ compatibilidade com o passo a passo antigo — hoje ele é idêntico ao
 | `config.py` | Pinagem (ver SPECS.md seção 2.2) |
 | `lcd_hd44780.py` | Driver do display, 4 bits, com cache de linha |
 | `ds18b20_sensor.py` | Sensor de temperatura (leitura em duas etapas, sem bloquear) |
+| `bigfont.py` | Fonte de blocos do Modo Letreiro Ampliado |
 | `ble_service.py` | Serviço GATT; o IRQ só enfileira, `tick()` processa |
 | `storage.py` | Configurações na NVS |
 | `clock_app.py` | **A aplicação**: Modo Normal + Modo Letreiro + BLE |
@@ -109,6 +152,7 @@ compatibilidade com o passo a passo antigo — hoje ele é idêntico ao
 | `test_ble.py` | Igual ao `main.py`, para rodar com F5 no Thonny |
 | `test_ble_sem_sensor.py` | Compatibilidade; idêntico ao `test_ble.py` |
 | `set_time.py`, `test_display.py`, `test_normal_mode.py` | Testes isolados das etapas 1 e 2 |
+| `tools/install.py`, `tools/package.py` | Rodam no **computador**, não no ESP32 — instalação/empacotamento em um passo (ver seção acima) |
 
 ## Como testar a persistência de configurações (etapa 6 do roadmap)
 

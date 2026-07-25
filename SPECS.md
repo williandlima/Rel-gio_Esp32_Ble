@@ -293,6 +293,11 @@ realmente rodando no ESP32/celular durante os testes:
   `versionName "1.7-letreiro-rolagem"` no app.
 - Modo Ampliado com escala menor (2x em vez de 4x — o tamanho original
   ficava exagerado): `clock_app v4`.
+- Empacotamento e instalação em um passo: `firmware/tools/package.py`
+  (gera um `.zip` versionado com manifesto de versões) e
+  `firmware/tools/install.py` (copia tudo pro ESP32 via `mpremote` com
+  um comando só). `android-app/` ganha o Gradle Wrapper de verdade
+  (antes bloqueado — ver `android-app/README.md`).
 
 ## 9. Revisão de Código — Correções Aplicadas
 
