@@ -12,6 +12,10 @@ import bluetooth
 from machine import Timer
 from micropython import const
 
+# Identificador de versao deste arquivo - aparece no Shell ao rodar,
+# pra facilitar confirmar se o ESP32 esta com o codigo mais atual.
+VERSION = "ble_service v4 (remonta escritas fragmentadas)"
+
 _IRQ_CENTRAL_CONNECT = const(1)
 _IRQ_CENTRAL_DISCONNECT = const(2)
 _IRQ_GATTS_WRITE = const(3)
@@ -39,6 +43,7 @@ _SERVICE = (
 
 class ClockBLEService:
     def __init__(self, name="Relogio-ESP32"):
+        print("Iniciando", VERSION)
         self._ble = bluetooth.BLE()
         self._ble.active(True)
         self._ble.config(mtu=256)  # aceita payloads maiores que os 20 bytes padrão

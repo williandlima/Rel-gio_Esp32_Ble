@@ -19,6 +19,8 @@ from lcd_hd44780 import LCD4Bit
 from ble_service import ClockBLEService
 import config
 
+print("=== test_ble_sem_sensor.py v2 (com remontagem de escritas fragmentadas) ===")
+
 WEEKDAYS = ("", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom")
 
 # Diferença, em segundos, entre a época Unix (1970-01-01) e a época usada
