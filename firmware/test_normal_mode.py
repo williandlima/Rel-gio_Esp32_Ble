@@ -44,7 +44,8 @@ while True:
 
     date_str = "{}, {:02d}/{:02d}/{:04d}".format(WEEKDAYS[weekday], day, month, year)
     time_str = "{:02d}:{:02d}:{:02d}".format(hour, minute, second)
-    temp_str = "Temp: {:.1f} C".format(temp_c)
+    # read_celsius() devolve None se a leitura falhar (ver ds18b20_sensor.py)
+    temp_str = "Temp: --" if temp_c is None else "Temp: {:.1f} C".format(temp_c)
 
     lcd.write_line(date_str, row=0)
     lcd.write_line(time_str, row=1)

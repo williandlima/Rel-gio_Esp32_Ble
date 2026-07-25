@@ -40,30 +40,29 @@ DS18B20 (1-Wire) já ligado conforme `config.py` / `SPECS.md` seção 2.2
    Relogio ESP32 BLE
    ```
 
-## Rodar sozinho, sem Thonny (etapa 2 — modo autônomo)
+## Rodar sozinho, sem Thonny (modo autônomo)
 
 MicroPython executa automaticamente um arquivo chamado **`main.py`**
 sempre que o ESP32 recebe energia — não precisa estar conectado ao
 Thonny nem ao computador, só ligado na tomada/carregador/power bank USB.
 
-1. Edite a data/hora no topo de `main.py` (mesma lógica do `set_time.py`,
-   já embutida aqui).
-2. Suba `config.py`, `lcd_hd44780.py`, `ds18b20_sensor.py` e `main.py`
-   pro ESP32 (nomes exatos, principalmente `main.py`).
-3. Desconecte do Thonny e plugue o ESP32 em qualquer fonte USB — o
-   display deve acender e mostrar o relógio sozinho.
+1. Suba os arquivos da aplicação (lista na seção abaixo), incluindo
+   `main.py` com esse nome exato.
+2. Desconecte do Thonny e plugue o ESP32 em qualquer fonte USB — o
+   display acende e mostra o relógio sozinho, já anunciando por BLE.
 
-**Limitação atual**: como não há RTC com bateria, a hora gravada em
-`main.py` só fica correta a partir do momento em que você fez o upload.
-Se a placa perder energia depois, ao religar ela volta pra essa mesma
-hora gravada (desatualizada) até você editar e reenviar `main.py` de
-novo. Isso será resolvido quando o app Android puder reenviar a hora
-via BLE (etapa 4 do roadmap).
+`main.py` roda **a mesma aplicação completa** do `test_ble.py` (relógio +
+temperatura + BLE + letreiro). Não há mais data/hora chumbada no arquivo:
+como o RTC interno não tem bateria, ao ligar o relógio começa em
+2000-01-01 e espera o app Android mandar a hora certa pelo botão
+"Sincronizar hora". Já a unidade de temperatura (°C/°F) é lida da NVS e
+**sobrevive** ao desligamento.
 
 ## Como testar o BLE (etapa 3 do roadmap)
 
-1. Suba `config.py`, `lcd_hd44780.py`, `ds18b20_sensor.py`, `ble_service.py`,
-   `storage.py` e `test_ble.py`.
+1. Suba `config.py`, `lcd_hd44780.py`, `ble_service.py`, `storage.py`,
+   `clock_app.py` e `test_ble.py` — mais `ds18b20_sensor.py`, se você
+   tiver o sensor de temperatura ligado.
 2. Rode `test_ble.py` (F5). O display deve continuar mostrando o Modo
    Normal, e o ESP32 passa a anunciar via BLE como **"Relogio-ESP32"**.
 3. No celular, abra um app BLE genérico (ex: **nRF Connect**), conecte no
@@ -75,17 +74,37 @@ via BLE (etapa 4 do roadmap).
    - **Marquee** (write): envie `{"text": "Bom dia!", "duration_s": 30, "speed_ms": 300}`
      — o display muda pro Modo Letreiro na hora: o texto rola nas 4 linhas
      por `duration_s` segundos, depois volta sozinho pro Modo Normal.
+     Para cancelar antes do tempo acabar, envie `{"text": ""}` ou
+     `{"duration_s": 0}`.
    - **Config** (read/write): leia o valor atual (`{"temp_unit": "C"}`) ou
      escreva um novo.
    - **Status** (read/notify): ative notificações — a cada ~5s deve chegar
-     um JSON com `temp_c` atualizado.
+     um JSON com `temp_c` atualizado. A **leitura** de Status também
+     devolve o JSON inteiro (antes vinha cortado em 20 bytes, porque o
+     buffer padrão de cada característica no MicroPython é desse tamanho —
+     hoje `ble_service.py` chama `gatts_set_buffer` para 512 bytes).
 
-**Sem o sensor DS18B20 conectado?** Use `test_ble_sem_sensor.py` no lugar de
-`test_ble.py` (suba `config.py`, `lcd_hd44780.py`, `ble_service.py`,
-`storage.py` e `test_ble_sem_sensor.py` — não precisa do `ds18b20_sensor.py`).
-Funciona igual, só sem leitura de temperatura (linha 3 do display mostra um
-aviso, e o Status não inclui `temp_c`). É temporário — a versão completa
-(`test_ble.py`) continua sendo a "oficial" do projeto.
+**Sem o sensor DS18B20 conectado?** Não precisa fazer nada de diferente: o
+firmware detecta a ausência do sensor sozinho, sobe normalmente e mostra
+"Sem sensor de temp." na linha 3 (o Status simplesmente não inclui
+`temp_c`). O arquivo `test_ble_sem_sensor.py` continua existindo só por
+compatibilidade com o passo a passo antigo — hoje ele é idêntico ao
+`test_ble.py`.
+
+## Organização dos arquivos
+
+| Arquivo | Papel |
+|---|---|
+| `config.py` | Pinagem (ver SPECS.md seção 2.2) |
+| `lcd_hd44780.py` | Driver do display, 4 bits, com cache de linha |
+| `ds18b20_sensor.py` | Sensor de temperatura (leitura em duas etapas, sem bloquear) |
+| `ble_service.py` | Serviço GATT; o IRQ só enfileira, `tick()` processa |
+| `storage.py` | Configurações na NVS |
+| `clock_app.py` | **A aplicação**: Modo Normal + Modo Letreiro + BLE |
+| `main.py` | Autoboot — só chama `clock_app.run()` |
+| `test_ble.py` | Igual ao `main.py`, para rodar com F5 no Thonny |
+| `test_ble_sem_sensor.py` | Compatibilidade; idêntico ao `test_ble.py` |
+| `set_time.py`, `test_display.py`, `test_normal_mode.py` | Testes isolados das etapas 1 e 2 |
 
 ## Como testar a persistência de configurações (etapa 6 do roadmap)
 
@@ -94,8 +113,8 @@ memória não-volátil (NVS) do ESP32 via o novo arquivo `storage.py` — ao
 contrário da hora (RTC interno), essa configuração **sobrevive** a
 reinícios e quedas de energia.
 
-1. Suba `storage.py` junto com os demais arquivos do BLE (ver seção
-   acima) e rode `test_ble.py` (ou `test_ble_sem_sensor.py`).
+1. Suba `storage.py` junto com os demais arquivos da aplicação (ver seção
+   acima) e rode `test_ble.py`.
 2. Pelo app Android (ou nRF Connect), escreva na característica **Config**:
    `{"temp_unit": "F"}`. O Shell do Thonny mostra `Config recebido: {...}`
    e, se tiver o sensor, a linha 3 do display passa a mostrar a

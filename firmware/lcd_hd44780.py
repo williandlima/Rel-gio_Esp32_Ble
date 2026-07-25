@@ -6,7 +6,7 @@
 from machine import Pin
 from utime import sleep_us, sleep_ms
 
-VERSION = "lcd_hd44780 v1"
+VERSION = "lcd_hd44780 v2 (cache de linha)"
 
 _LCD_CLEAR = 0x01
 _LCD_HOME = 0x02
@@ -30,6 +30,12 @@ class LCD4Bit:
         self._e = Pin(e_pin, Pin.OUT, value=0)
         self._data = [Pin(p, Pin.OUT, value=0)
                       for p in (d4_pin, d5_pin, d6_pin, d7_pin)]
+
+        # Última linha escrita em cada row, para não regravar conteúdo
+        # idêntico: o barramento é bit-bang em 4 bits e escrever as 4
+        # linhas custa ~8ms. Com o cache, só a linha da hora é reescrita a
+        # cada segundo.
+        self._line_cache = [None] * rows
 
         self._init_display()
 
@@ -79,6 +85,7 @@ class LCD4Bit:
     def clear(self):
         self._command(_LCD_CLEAR)
         sleep_ms(2)  # comando de clear é mais lento
+        self._line_cache = [None] * self.rows
 
     def move_to(self, col, row):
         row = min(row, self.rows - 1)
@@ -86,14 +93,21 @@ class LCD4Bit:
         self._command(_LCD_SET_DDRAM_ADDR | addr)
 
     def putstr(self, text, col=0, row=0):
+        row = min(max(row, 0), self.rows - 1)
         self.move_to(col, row)
         for ch in text[: self.cols - col]:
             self._write_char(ch)
+        # Escrita parcial/arbitrária: o cache da linha deixa de ser confiável.
+        self._line_cache[row] = None
 
-    def write_line(self, text, row):
+    def write_line(self, text, row, force=False):
         # Escreve a linha inteira, preenchendo com espaços para apagar
         # qualquer resíduo de conteúdo anterior mais longo.
         # (preenchimento manual: MicroPython não tem str.ljust())
+        row = min(max(row, 0), self.rows - 1)
         truncated = text[: self.cols]
         line = truncated + " " * (self.cols - len(truncated))
+        if not force and self._line_cache[row] == line:
+            return
         self.putstr(line, col=0, row=row)
+        self._line_cache[row] = line
