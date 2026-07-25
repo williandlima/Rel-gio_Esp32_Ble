@@ -2,175 +2,300 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/app_background">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
-
-        <TextView
-            android:id="@+id/textConnectionStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Desconectado"
-            android:textStyle="bold"
-            android:textSize="16sp" />
+        android:padding="20dp">
 
         <Button
             android:id="@+id/buttonConnect"
+            style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Conectar ao Relogio-ESP32" />
+            android:layout_height="52dp"
+            android:background="@drawable/bg_button_navy"
+            android:text="Conectar ao Relogio-ESP32"
+            android:textAllCaps="false"
+            android:textColor="@color/primary_navy_text"
+            android:textStyle="bold" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginVertical="16dp"
-            android:background="#CCCCCC" />
+            android:layout_marginVertical="20dp"
+            android:background="@color/divider" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Data e hora"
+            android:textAllCaps="true"
+            android:textColor="@color/text_label"
+            android:textSize="12sp"
             android:textStyle="bold"
-            android:text="Data e hora" />
+            android:letterSpacing="0.08" />
 
         <Button
             android:id="@+id/buttonSyncTime"
+            style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_button_outline_blue"
+            android:text="Sincronizar hora com o celular"
+            android:textAllCaps="false"
+            android:textColor="@color/outline_blue" />
+
+        <TextView
+            android:id="@+id/textSyncStatus"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Sincronizar hora com o celular" />
+            android:text="Ainda nao sincronizado."
+            android:textColor="@color/text_error"
+            android:textSize="13sp" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginVertical="16dp"
-            android:background="#CCCCCC" />
+            android:layout_marginVertical="20dp"
+            android:background="@color/divider" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Letreiro"
+            android:textAllCaps="true"
+            android:textColor="@color/text_label"
+            android:textSize="12sp"
             android:textStyle="bold"
-            android:text="Letreiro" />
+            android:letterSpacing="0.08" />
 
         <EditText
             android:id="@+id/editMarqueeText"
             android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_input_field"
+            android:paddingHorizontal="16dp"
+            android:hint="Texto do letreiro"
+            android:textColor="@color/text_dark"
+            android:textColorHint="@color/muted_text" />
+
+        <TextView
+            android:id="@+id/textMarqueeError"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="Texto do letreiro" />
+            android:layout_marginTop="6dp"
+            android:text="Informe o texto do letreiro."
+            android:textColor="@color/text_error"
+            android:textSize="13sp"
+            android:visibility="gone" />
 
         <EditText
             android:id="@+id/editMarqueeDuration"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_input_field"
+            android:paddingHorizontal="16dp"
             android:hint="Duracao (segundos)"
-            android:inputType="number" />
+            android:inputType="number"
+            android:text="30"
+            android:textColor="@color/text_dark"
+            android:textColorHint="@color/muted_text" />
 
         <EditText
             android:id="@+id/editMarqueeSpeed"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_input_field"
+            android:paddingHorizontal="16dp"
             android:hint="Velocidade (ms por passo)"
-            android:inputType="number" />
+            android:inputType="number"
+            android:text="300"
+            android:textColor="@color/text_dark"
+            android:textColorHint="@color/muted_text" />
 
         <Button
             android:id="@+id/buttonSendMarquee"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_button_muted"
+            android:text="Enviar letreiro"
+            android:textAllCaps="false"
+            android:textColor="@color/muted_text"
+            android:textStyle="bold" />
+
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Enviar letreiro" />
+            android:text="O letreiro ocupa as 4 linhas do display, rolando pelo tempo e velocidade configurados, e depois volta sozinho ao Modo Normal."
+            android:textColor="@color/text_label"
+            android:textSize="13sp" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginVertical="16dp"
-            android:background="#CCCCCC" />
+            android:layout_marginVertical="20dp"
+            android:background="@color/divider" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Configuracoes"
+            android:textAllCaps="true"
+            android:textColor="@color/text_label"
+            android:textSize="12sp"
             android:textStyle="bold"
-            android:text="Configuracoes" />
+            android:letterSpacing="0.08" />
 
         <RadioGroup
             android:id="@+id/radioGroupTempUnit"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
 
             <RadioButton
                 android:id="@+id/radioCelsius"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:button="@null"
+                android:background="@drawable/bg_toggle_segment"
+                android:gravity="center"
                 android:text="Celsius"
+                android:textColor="@color/text_toggle_segment"
+                android:textAllCaps="false"
                 android:checked="true" />
 
             <RadioButton
                 android:id="@+id/radioFahrenheit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:text="Fahrenheit" />
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:button="@null"
+                android:background="@drawable/bg_toggle_segment"
+                android:gravity="center"
+                android:text="Fahrenheit"
+                android:textColor="@color/text_toggle_segment"
+                android:textAllCaps="false" />
         </RadioGroup>
 
-        <Button
-            android:id="@+id/buttonSaveConfig"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Salvar configuracao" />
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/buttonReadConfig"
-            android:layout_width="match_parent"
+            <Button
+                android:id="@+id/buttonSaveConfig"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_button_navy"
+                android:text="Salvar configuracao"
+                android:textAllCaps="false"
+                android:textColor="@color/primary_navy_text"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/buttonReadConfig"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_button_outline_gray"
+                android:text="Ler atual"
+                android:textAllCaps="false"
+                android:textColor="@color/text_dark"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/textConfigSummary"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Ler configuracao atual" />
+            android:layout_marginTop="10dp"
+            android:text="Unidade salva no relogio: -"
+            android:textColor="@color/text_dark"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/textConfigJsonLink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Ver JSON"
+            android:textColor="@color/outline_blue"
+            android:textSize="13sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textConfig"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="" />
+            android:layout_marginTop="6dp"
+            android:fontFamily="monospace"
+            android:text=""
+            android:textColor="@color/text_label"
+            android:textSize="12sp"
+            android:visibility="gone" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginVertical="16dp"
-            android:background="#CCCCCC" />
+            android:layout_marginVertical="20dp"
+            android:background="@color/divider" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Status (notificacoes)"
+            android:textAllCaps="true"
+            android:textColor="@color/text_label"
+            android:textSize="12sp"
             android:textStyle="bold"
-            android:text="Status (notificacoes)" />
+            android:letterSpacing="0.08" />
 
         <TextView
             android:id="@+id/textStatus"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="" />
+            android:fontFamily="monospace"
+            android:text=""
+            android:textColor="@color/text_dark"
+            android:textSize="12sp" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginVertical="16dp"
-            android:background="#CCCCCC" />
+            android:layout_marginVertical="20dp"
+            android:background="@color/divider" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Log"
+            android:textAllCaps="true"
+            android:textColor="@color/text_label"
+            android:textSize="12sp"
             android:textStyle="bold"
-            android:text="Log" />
+            android:letterSpacing="0.08" />
 
         <TextView
             android:id="@+id/textLog"
@@ -179,6 +304,7 @@
             android:layout_marginTop="8dp"
             android:fontFamily="monospace"
             android:textSize="12sp"
+            android:textColor="@color/text_dark"
             android:text="" />
 
     </LinearLayout>

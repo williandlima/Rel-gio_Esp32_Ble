@@ -43,20 +43,20 @@ firmware com BLE ativo), anunciando como **"Relogio-ESP32"**.
    emulador) conectado via cabo USB, com depuração USB ativada.
 2. Toque em **"Conectar ao Relogio-ESP32"** — conceda as permissões de
    Bluetooth/Localização pedidas.
-3. Quando conectar, o texto de status muda para "Conectado" e o app
+3. Quando conectar, o botão do topo muda para **"Desconectar"** e o app
    assina as notificações de **Status** automaticamente (deve começar a
    aparecer `{"mode": "normal", "temp_c": ..., "connected": true}` a cada
-   ~5s).
+   ~5s na seção "Status (notificações)").
 4. Toque em **"Sincronizar hora com o celular"** — a hora do display do
    relógio deve mudar para a hora atual (já ajustada pro fuso horário
    local do celular, ao contrário do teste manual anterior via nRF Connect
    que usava UTC puro).
 5. Preencha o texto/duração/velocidade do letreiro e toque em **"Enviar
-   letreiro"** — por enquanto só aparece no Shell do Thonny (`Marquee
-   recebido: {...}`), o comportamento real no display é a etapa 5 do
-   roadmap.
-6. Teste **"Salvar configuracao"** (Celsius/Fahrenheit) e **"Ler
-   configuracao atual"**.
+   letreiro"** — o display do relógio muda na hora pro Modo Letreiro,
+   rolando o texto pelo tempo configurado, e volta sozinho ao Modo Normal.
+6. Teste **"Salvar configuração"** (Celsius/Fahrenheit) e **"Ler atual"** —
+   o resumo ("Unidade salva no relógio: ...") atualiza, e o link **"Ver
+   JSON"** mostra/esconde o payload bruto recebido.
 
 ## Estrutura
 

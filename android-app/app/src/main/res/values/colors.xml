@@ -1,4 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#1565C0</color>
+
+    <!-- Paleta baseada no design do Claude Design (handoff) -->
+    <color name="app_background">#F3F1EC</color>
+    <color name="card_white">#FFFFFF</color>
+
+    <color name="primary_navy">#1E3A5F</color>
+    <color name="primary_navy_text">#FFFFFF</color>
+
+    <color name="taupe">#8A7A68</color>
+    <color name="taupe_text">#FFFFFF</color>
+
+    <color name="outline_blue">#1565C0</color>
+    <color name="outline_gray">#D9D3C8</color>
+
+    <color name="muted_fill">#DAD5CB</color>
+    <color name="muted_text">#8B8378</color>
+
+    <color name="text_dark">#3A352F</color>
+    <color name="text_label">#8A8478</color>
+    <color name="text_error">#C0392B</color>
+    <color name="text_success">#3D7A4D</color>
+    <color name="divider">#E1DCD3</color>
 </resources>

@@ -196,3 +196,6 @@ realmente rodando no ESP32/celular durante os testes:
   `3a645fc` desta branch.
 - Persistência de configurações (`storage.py`, etapa 6): `test_ble.py`
   e `test_ble_sem_sensor.py` subiram para v4.
+- Redesign da interface do app Android (paleta e componentes conforme
+  mockup do Claude Design): `versionCode 3` / `versionName
+  "1.2-ui-redesign"`.

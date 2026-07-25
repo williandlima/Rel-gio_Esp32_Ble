@@ -5,16 +5,23 @@ import android.bluetooth.BluetoothAdapter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.relogioesp32.ble.databinding.ActivityMainBinding
+import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.TimeZone
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var ble: BleManager
+    private var isConnected = false
+    private var jsonVisible = false
 
     private val requestPermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -38,13 +45,20 @@ class MainActivity : AppCompatActivity() {
         ble.onLog = { msg -> runOnUiThread { appendLog(msg) } }
         ble.onConnectionStateChange = { connected ->
             runOnUiThread {
-                binding.textConnectionStatus.text = if (connected) "Conectado" else "Desconectado"
+                isConnected = connected
+                binding.buttonConnect.text =
+                    if (connected) "Desconectar" else "Conectar ao Relogio-ESP32"
+                binding.buttonConnect.setBackgroundResource(
+                    if (connected) R.drawable.bg_button_taupe else R.drawable.bg_button_navy
+                )
             }
         }
         ble.onStatusChanged = { json -> runOnUiThread { binding.textStatus.text = json } }
-        ble.onConfigRead = { json -> runOnUiThread { binding.textConfig.text = json } }
+        ble.onConfigRead = { json -> runOnUiThread { showConfig(json) } }
 
-        binding.buttonConnect.setOnClickListener { requestPermissionsAndScan() }
+        binding.buttonConnect.setOnClickListener {
+            if (isConnected) ble.disconnect() else requestPermissionsAndScan()
+        }
 
         binding.buttonSyncTime.setOnClickListener {
             // O firmware nao faz conversao de fuso horario (ver SPECS.md
@@ -54,10 +68,19 @@ class MainActivity : AppCompatActivity() {
             val offsetMillis = TimeZone.getDefault().getOffset(nowUtcMillis)
             val localEpochSeconds = (nowUtcMillis + offsetMillis) / 1000
             ble.writeSetDateTime(localEpochSeconds)
+
+            val now = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+            binding.textSyncStatus.text = "Sincronizado as $now"
+            binding.textSyncStatus.setTextColor(getColor(R.color.text_success))
         }
 
         binding.buttonSendMarquee.setOnClickListener {
             val text = binding.editMarqueeText.text.toString()
+            if (text.isBlank()) {
+                binding.textMarqueeError.visibility = View.VISIBLE
+                return@setOnClickListener
+            }
+            binding.textMarqueeError.visibility = View.GONE
             val duration = binding.editMarqueeDuration.text.toString().toIntOrNull() ?: 30
             val speed = binding.editMarqueeSpeed.text.toString().toIntOrNull() ?: 300
             ble.writeMarquee(text, duration, speed)
@@ -69,6 +92,27 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.buttonReadConfig.setOnClickListener { ble.readConfig() }
+
+        binding.textConfigJsonLink.setOnClickListener {
+            jsonVisible = !jsonVisible
+            binding.textConfig.visibility = if (jsonVisible) View.VISIBLE else View.GONE
+            binding.textConfigJsonLink.text = if (jsonVisible) "Ocultar JSON" else "Ver JSON"
+        }
+    }
+
+    private fun showConfig(json: String) {
+        binding.textConfig.text = json
+        val unit = try {
+            JSONObject(json).optString("temp_unit", "-")
+        } catch (e: Exception) {
+            "-"
+        }
+        val friendlyUnit = when (unit) {
+            "F" -> "Fahrenheit"
+            "C" -> "Celsius"
+            else -> "-"
+        }
+        binding.textConfigSummary.text = "Unidade salva no relogio: $friendlyUnit"
     }
 
     private fun requestPermissionsAndScan() {
