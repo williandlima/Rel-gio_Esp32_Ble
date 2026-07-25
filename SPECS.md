@@ -84,10 +84,15 @@ Linha 4: [status BLE / livre]   <- indicador de conexão BLE, ou em branco
 ### 3.2 Modo Letreiro
 
 - Ativado quando o app envia uma mensagem via BLE.
-- Ocupa as 4 linhas do display por completo com o texto rolando (scroll
-  horizontal contínuo).
-- Parâmetros configuráveis pelo app: **texto**, **duração total** (segundos)
-  e **velocidade de rolagem** (ms por passo, com valor padrão sensato).
+- Ocupa as 4 linhas do display por completo, em um de **três modos**
+  (detalhes de payload na seção 4.2):
+  1. **Rolagem** — texto único com scroll horizontal contínuo nas 4 linhas.
+  2. **4 linhas** — quatro campos fixos, um por linha do display.
+  3. **Ampliado** — um caractere por vez, desenhado em blocos ocupando as
+     4 linhas, avançando no ritmo configurado.
+- Parâmetros configuráveis pelo app: **modo**, **texto** (ou as 4 linhas),
+  **duração total** (segundos) e **velocidade** (ms por passo na rolagem,
+  ms por caractere no ampliado).
 - Apenas **uma mensagem ativa** por vez — uma nova mensagem recebida
   substitui a anterior e reinicia a contagem de duração.
 - Ao expirar a duração configurada, o firmware **volta automaticamente**
@@ -147,6 +152,25 @@ Serviço: `8da7ea58-d7a9-4740-899d-e790d280bbec`
 > **Cancelar o letreiro**: enviar `{"text": ""}` ou `{"duration_s": 0}` na
 > característica Marquee volta imediatamente ao Modo Normal. A duração é
 > limitada a 3600 s e a velocidade tem piso de 50 ms por passo.
+
+#### Modos do letreiro (campo `mode` da característica Marquee)
+
+| `mode` | Conteúdo | Payload |
+|---|---|---|
+| `scroll` (padrão) | Texto único rolando nas 4 linhas | `{"mode":"scroll","text":"Bom dia!","duration_s":30,"speed_ms":300}` |
+| `lines` | 4 campos fixos, um por linha do display | `{"mode":"lines","lines":["L1","L2","L3","L4"],"duration_s":30}` |
+| `big` | Um caractere por vez, ampliado nas 4 linhas | `{"mode":"big","text":"OI","duration_s":30,"speed_ms":600}` |
+
+- Payload **sem** o campo `mode` cai em `scroll`, então o formato antigo
+  continua válido.
+- Em `lines`, entradas faltando ou de tipo errado viram linha vazia; se
+  todas ficarem vazias, equivale a cancelar. Cada linha comporta 20
+  caracteres (o excedente é cortado pelo driver do display).
+- Em `big`, `speed_ms` é o tempo **por caractere**, com piso de 200 ms. Os
+  glifos vêm de `firmware/bigfont.py` (matriz 4x5 escalada 3x, ocupando 15
+  das 20 colunas, centralizada). Caracteres sem glifo próprio caem em `?`.
+- O Status informa `marquee_mode` junto de `mode` enquanto houver letreiro
+  no ar, para o app poder mostrar qual modo está ativo.
 
 > **Texto do letreiro**: o HD44780 não tem acentos no gerador de
 > caracteres. O app remove os acentos antes de enviar ("ação" → "acao") e
@@ -240,6 +264,9 @@ realmente rodando no ESP32/celular durante os testes:
   `ble_service v5`, `ds18b20_sensor v2`, `lcd_hd44780 v2`, `storage v2`,
   `clock_app v1` (novo) no firmware; `versionCode 6` / `versionName
   "1.5-robustez-ble"` no app.
+- Três modos de letreiro + acabamento da interface: `clock_app v2` e
+  `bigfont v1` (novo) no firmware; `versionCode 7` / `versionName
+  "1.6-modos-letreiro"` no app.
 
 ## 9. Revisão de Código — Correções Aplicadas
 

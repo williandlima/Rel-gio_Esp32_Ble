@@ -16,6 +16,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import org.json.JSONArray
 import org.json.JSONObject
 import java.text.Normalizer
 import java.util.UUID
@@ -357,13 +358,43 @@ class BleManager(private val context: Context) {
         write(CHAR_SET_DATETIME, json)
     }
 
-    fun writeMarquee(text: String, durationS: Int, speedMs: Int) {
+    /** Modo Rolagem: um texto só, rolando nas 4 linhas. */
+    fun writeMarqueeScroll(text: String, durationS: Int, speedMs: Int) {
         val json = JSONObject()
+            .put("mode", "scroll")
             .put("text", toDisplayableAscii(text))
             .put("duration_s", durationS)
             .put("speed_ms", speedMs)
             .toString()
         write(CHAR_MARQUEE, json)
+    }
+
+    /** Modo 4 linhas: conteúdo fixo, um campo por linha do display. */
+    fun writeMarqueeLines(lines: List<String>, durationS: Int) {
+        val array = JSONArray()
+        lines.forEach { array.put(toDisplayableAscii(it)) }
+        val json = JSONObject()
+            .put("mode", "lines")
+            .put("lines", array)
+            .put("duration_s", durationS)
+            .toString()
+        write(CHAR_MARQUEE, json)
+    }
+
+    /** Modo Ampliado: um caractere por vez ocupando as 4 linhas. */
+    fun writeMarqueeBig(text: String, durationS: Int, speedMs: Int) {
+        val json = JSONObject()
+            .put("mode", "big")
+            .put("text", toDisplayableAscii(text))
+            .put("duration_s", durationS)
+            .put("speed_ms", speedMs)
+            .toString()
+        write(CHAR_MARQUEE, json)
+    }
+
+    /** Interrompe o letreiro e volta ao Modo Normal (duração zero). */
+    fun writeMarqueeStop() {
+        write(CHAR_MARQUEE, JSONObject().put("duration_s", 0).toString())
     }
 
     fun writeConfig(tempUnit: String) {

@@ -7,13 +7,16 @@
     <color name="card_white">#FFFFFF</color>
 
     <color name="primary_navy">#1E3A5F</color>
+    <color name="primary_navy_pressed">#152A45</color>
     <color name="primary_navy_text">#FFFFFF</color>
 
     <color name="taupe">#8A7A68</color>
+    <color name="taupe_pressed">#6F6153</color>
     <color name="taupe_text">#FFFFFF</color>
 
     <color name="outline_blue">#1565C0</color>
     <color name="outline_gray">#D9D3C8</color>
+    <color name="pressed_tint">#E8E3DA</color>
 
     <color name="muted_fill">#DAD5CB</color>
     <color name="muted_text">#8B8378</color>
@@ -21,9 +24,20 @@
     <color name="text_dark">#3A352F</color>
     <color name="text_label">#8A8478</color>
     <color name="text_error">#C1512E</color>
-    <color name="text_success">#3D7A4D</color>
     <color name="divider">#E1DCD3</color>
 
+    <!-- Semântica de estado: verde = acionado/conectado, cinza = desligado.
+         Usada no selo de conexão, nos seletores marcados, no indicador do
+         letreiro e no botão de conexão quando conectado. -->
+    <color name="state_on">#2E7D4F</color>
+    <color name="state_on_pressed">#24633E</color>
+    <color name="state_on_bg">#DCEEE1</color>
+    <color name="state_on_text">#FFFFFF</color>
+    <color name="state_off">#8B8378</color>
+    <color name="state_off_bg">#ECE8E1</color>
+
+    <!-- Nome antigo mantido: text_success é usado como cor do texto verde -->
+    <color name="text_success">#2E7D4F</color>
     <color name="status_connected_bg">#DCEEE1</color>
     <color name="status_disconnected_bg">#ECE8E1</color>
 </resources>

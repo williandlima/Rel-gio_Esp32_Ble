@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/app_background">
@@ -8,23 +9,24 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="@dimen/screen_padding">
 
+        <!-- Cabeçalho: identidade + selo de estado (verde/cinza) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="@dimen/space_l"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <FrameLayout
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="@dimen/header_icon"
+                android:layout_height="@dimen/header_icon"
                 android:background="@drawable/bg_circle_icon">
 
                 <ImageView
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
+                    android:layout_width="@dimen/header_icon_glyph"
+                    android:layout_height="@dimen/header_icon_glyph"
                     android:layout_gravity="center"
                     android:contentDescription="@null"
                     android:src="@drawable/ic_clock" />
@@ -33,7 +35,7 @@
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="@dimen/space_l"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
@@ -42,7 +44,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/header_title"
                     android:textColor="@color/text_dark"
-                    android:textSize="17sp"
+                    android:textSize="@dimen/text_title"
                     android:textStyle="bold" />
 
                 <TextView
@@ -50,7 +52,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/header_subtitle"
                     android:textColor="@color/text_label"
-                    android:textSize="12sp" />
+                    android:textSize="@dimen/text_section" />
             </LinearLayout>
 
             <TextView
@@ -58,11 +60,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_status_pill_disconnected"
-                android:paddingHorizontal="10dp"
-                android:paddingVertical="4dp"
+                android:paddingHorizontal="@dimen/space_m"
+                android:paddingVertical="@dimen/space_xs"
                 android:text="@string/badge_disconnected"
-                android:textColor="@color/text_label"
-                android:textSize="12sp"
+                android:textColor="@color/state_off"
+                android:textSize="@dimen/text_section"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -70,19 +72,21 @@
             android:id="@+id/buttonConnect"
             style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:background="@drawable/bg_button_navy"
+            android:layout_height="@dimen/height_action_primary"
+            android:background="@drawable/bg_button_primary"
             android:text="@string/button_connect"
             android:textAllCaps="false"
-            android:textColor="@color/primary_navy_text"
+            android:textColor="@color/text_on_filled"
+            android:textSize="@dimen/text_button"
             android:textStyle="bold" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginVertical="20dp"
+            android:layout_marginVertical="@dimen/space_section"
             android:background="@color/divider" />
 
+        <!-- Data e hora -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -90,122 +94,223 @@
             android:text="@string/section_datetime"
             android:textAllCaps="true"
             android:textColor="@color/text_label"
-            android:textSize="12sp"
+            android:textSize="@dimen/text_section"
             android:textStyle="bold" />
 
         <Button
             android:id="@+id/buttonSyncTime"
             style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/bg_button_outline_blue"
+            android:layout_height="@dimen/height_action_primary"
+            android:layout_marginTop="@dimen/space_m"
+            android:background="@drawable/bg_button_outline"
             android:text="@string/button_sync_time"
             android:textAllCaps="false"
-            android:textColor="@color/outline_blue" />
+            android:textColor="@color/text_on_outline"
+            android:textSize="@dimen/text_button" />
 
         <TextView
             android:id="@+id/textSyncStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="@dimen/space_s"
             android:text="@string/sync_never"
-            android:textColor="@color/text_error"
-            android:textSize="13sp" />
+            android:textColor="@color/state_off"
+            android:textSize="@dimen/text_body" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginVertical="20dp"
+            android:layout_marginVertical="@dimen/space_section"
             android:background="@color/divider" />
 
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Letreiro -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:letterSpacing="0.08"
-            android:text="@string/section_marquee"
-            android:textAllCaps="true"
-            android:textColor="@color/text_label"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:letterSpacing="0.08"
+                android:text="@string/section_marquee"
+                android:textAllCaps="true"
+                android:textColor="@color/text_label"
+                android:textSize="@dimen/text_section"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textMarqueeState"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_status_pill_disconnected"
+                android:paddingHorizontal="@dimen/space_m"
+                android:paddingVertical="@dimen/space_xs"
+                android:text="@string/marquee_state_off"
+                android:textColor="@color/state_off"
+                android:textSize="@dimen/text_section"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <RadioGroup
+            android:id="@+id/radioGroupMarqueeMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_m"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/radioModeScroll"
+                style="@style/SegmentButton"
+                android:layout_marginEnd="@dimen/space_xs"
+                android:checked="true"
+                android:text="@string/mode_scroll" />
+
+            <RadioButton
+                android:id="@+id/radioModeLines"
+                style="@style/SegmentButton"
+                android:layout_marginHorizontal="@dimen/space_xs"
+                android:text="@string/mode_lines" />
+
+            <RadioButton
+                android:id="@+id/radioModeBig"
+                style="@style/SegmentButton"
+                android:layout_marginStart="@dimen/space_xs"
+                android:text="@string/mode_big" />
+        </RadioGroup>
+
+        <!-- Modos Rolagem e Ampliado: um texto só -->
         <EditText
             android:id="@+id/editMarqueeText"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/bg_input_field"
+            style="@style/InputField"
+            android:layout_marginTop="@dimen/space_m"
             android:hint="@string/hint_marquee_text"
-            android:importantForAutofill="no"
-            android:inputType="text"
-            android:paddingHorizontal="16dp"
-            android:textColor="@color/text_dark"
-            android:textColorHint="@color/muted_text" />
+            android:inputType="text" />
+
+        <!-- Modo 4 linhas: um campo por linha do display -->
+        <LinearLayout
+            android:id="@+id/groupMarqueeLines"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/editLine1"
+                style="@style/InputField"
+                android:layout_marginTop="@dimen/space_m"
+                android:hint="@string/hint_line_1"
+                android:inputType="text"
+                android:maxLength="20" />
+
+            <EditText
+                android:id="@+id/editLine2"
+                style="@style/InputField"
+                android:layout_marginTop="@dimen/space_xs"
+                android:hint="@string/hint_line_2"
+                android:inputType="text"
+                android:maxLength="20" />
+
+            <EditText
+                android:id="@+id/editLine3"
+                style="@style/InputField"
+                android:layout_marginTop="@dimen/space_xs"
+                android:hint="@string/hint_line_3"
+                android:inputType="text"
+                android:maxLength="20" />
+
+            <EditText
+                android:id="@+id/editLine4"
+                style="@style/InputField"
+                android:layout_marginTop="@dimen/space_xs"
+                android:hint="@string/hint_line_4"
+                android:inputType="text"
+                android:maxLength="20" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/textMarqueeError"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="@dimen/space_xs"
             android:text="@string/error_marquee_empty"
             android:textColor="@color/text_error"
-            android:textSize="13sp"
+            android:textSize="@dimen/text_body"
             android:visibility="gone" />
 
         <EditText
             android:id="@+id/editMarqueeDuration"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/bg_input_field"
+            style="@style/InputField"
+            android:layout_marginTop="@dimen/space_m"
             android:hint="@string/hint_marquee_duration"
-            android:importantForAutofill="no"
             android:inputType="number"
-            android:paddingHorizontal="16dp"
-            android:text="30"
-            android:textColor="@color/text_dark"
-            android:textColorHint="@color/muted_text" />
+            android:text="30" />
 
         <EditText
             android:id="@+id/editMarqueeSpeed"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/bg_input_field"
+            style="@style/InputField"
+            android:layout_marginTop="@dimen/space_m"
             android:hint="@string/hint_marquee_speed"
-            android:importantForAutofill="no"
             android:inputType="number"
-            android:paddingHorizontal="16dp"
-            android:text="300"
-            android:textColor="@color/text_dark"
-            android:textColorHint="@color/muted_text" />
+            android:text="300" />
 
-        <Button
-            android:id="@+id/buttonSendMarquee"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/bg_button_muted"
-            android:text="@string/button_send_marquee"
-            android:textAllCaps="false"
-            android:textColor="@color/muted_text"
-            android:textStyle="bold" />
-
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/marquee_help"
+            android:layout_marginTop="@dimen/space_m"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/buttonSendMarquee"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/height_action_secondary"
+                android:layout_marginEnd="@dimen/space_xs"
+                android:layout_weight="1"
+                android:background="@drawable/bg_button_primary_sec"
+                android:text="@string/button_send_marquee"
+                android:textAllCaps="false"
+                android:textColor="@color/text_on_filled"
+                android:textStyle="bold"
+                app:autoSizeMaxTextSize="@dimen/text_button_compact_max"
+                app:autoSizeMinTextSize="@dimen/text_button_compact_min"
+                app:autoSizeTextType="uniform" />
+
+            <Button
+                android:id="@+id/buttonStopMarquee"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/height_action_secondary"
+                android:layout_marginStart="@dimen/space_xs"
+                android:layout_weight="1"
+                android:background="@drawable/bg_button_secondary"
+                android:text="@string/button_stop_marquee"
+                android:textAllCaps="false"
+                android:textColor="@color/text_on_secondary"
+                app:autoSizeMaxTextSize="@dimen/text_button_compact_max"
+                app:autoSizeMinTextSize="@dimen/text_button_compact_min"
+                app:autoSizeTextType="uniform" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/textMarqueeHelp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_s"
+            android:text="@string/marquee_help_scroll"
             android:textColor="@color/text_label"
-            android:textSize="13sp" />
+            android:textSize="@dimen/text_body" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginVertical="20dp"
+            android:layout_marginVertical="@dimen/space_section"
             android:background="@color/divider" />
 
+        <!-- Configurações -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -213,86 +318,77 @@
             android:text="@string/section_config"
             android:textAllCaps="true"
             android:textColor="@color/text_label"
-            android:textSize="12sp"
+            android:textSize="@dimen/text_section"
             android:textStyle="bold" />
 
         <RadioGroup
             android:id="@+id/radioGroupTempUnit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="@dimen/space_m"
             android:orientation="horizontal">
 
             <RadioButton
                 android:id="@+id/radioCelsius"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_toggle_segment"
-                android:button="@null"
+                style="@style/SegmentButton"
+                android:layout_marginEnd="@dimen/space_xs"
                 android:checked="true"
-                android:gravity="center"
-                android:text="@string/unit_celsius"
-                android:textAllCaps="false"
-                android:textColor="@color/text_toggle_segment" />
+                android:text="@string/unit_celsius" />
 
             <RadioButton
                 android:id="@+id/radioFahrenheit"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_toggle_segment"
-                android:button="@null"
-                android:gravity="center"
-                android:text="@string/unit_fahrenheit"
-                android:textAllCaps="false"
-                android:textColor="@color/text_toggle_segment" />
+                style="@style/SegmentButton"
+                android:layout_marginStart="@dimen/space_xs"
+                android:text="@string/unit_fahrenheit" />
         </RadioGroup>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="@dimen/space_m"
             android:orientation="horizontal">
 
             <Button
                 android:id="@+id/buttonSaveConfig"
                 style="?android:attr/borderlessButtonStyle"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginEnd="6dp"
+                android:layout_height="@dimen/height_action_secondary"
+                android:layout_marginEnd="@dimen/space_xs"
                 android:layout_weight="1"
-                android:background="@drawable/bg_button_navy"
+                android:background="@drawable/bg_button_primary_sec"
                 android:text="@string/button_save_config"
                 android:textAllCaps="false"
-                android:textColor="@color/primary_navy_text"
-                android:textSize="13sp" />
+                android:textColor="@color/text_on_filled"
+                android:textStyle="bold"
+                app:autoSizeMaxTextSize="@dimen/text_button_compact_max"
+                app:autoSizeMinTextSize="@dimen/text_button_compact_min"
+                app:autoSizeTextType="uniform" />
 
             <Button
                 android:id="@+id/buttonReadConfig"
                 style="?android:attr/borderlessButtonStyle"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="6dp"
+                android:layout_height="@dimen/height_action_secondary"
+                android:layout_marginStart="@dimen/space_xs"
                 android:layout_weight="1"
-                android:background="@drawable/bg_button_outline_gray"
+                android:background="@drawable/bg_button_secondary"
                 android:text="@string/button_read_config"
                 android:textAllCaps="false"
-                android:textColor="@color/text_dark"
-                android:textSize="13sp" />
+                android:textColor="@color/text_on_secondary"
+                app:autoSizeMaxTextSize="@dimen/text_button_compact_max"
+                app:autoSizeMinTextSize="@dimen/text_button_compact_min"
+                app:autoSizeTextType="uniform" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="@dimen/space_m"
             android:background="@drawable/bg_input_field"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="12dp">
+            android:paddingHorizontal="@dimen/field_padding_h"
+            android:paddingVertical="@dimen/space_l">
 
             <TextView
                 android:id="@+id/textConfigSummary"
@@ -301,16 +397,16 @@
                 android:layout_weight="1"
                 android:text="@string/config_summary_unknown"
                 android:textColor="@color/text_dark"
-                android:textSize="13sp" />
+                android:textSize="@dimen/text_body" />
 
             <TextView
                 android:id="@+id/textConfigJsonLink"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="@dimen/space_s"
                 android:text="@string/link_show_json"
                 android:textColor="@color/outline_blue"
-                android:textSize="13sp"
+                android:textSize="@dimen/text_body"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -318,20 +414,21 @@
             android:id="@+id/textConfig"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="@dimen/space_xs"
             android:background="@drawable/bg_input_field"
             android:fontFamily="monospace"
-            android:padding="12dp"
+            android:padding="@dimen/space_l"
             android:textColor="@color/text_label"
-            android:textSize="12sp"
+            android:textSize="@dimen/text_mono"
             android:visibility="gone" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginVertical="20dp"
+            android:layout_marginVertical="@dimen/space_section"
             android:background="@color/divider" />
 
+        <!-- Status -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -339,26 +436,27 @@
             android:text="@string/section_status"
             android:textAllCaps="true"
             android:textColor="@color/text_label"
-            android:textSize="12sp"
+            android:textSize="@dimen/text_section"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textStatus"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="@dimen/space_s"
             android:background="@drawable/bg_input_field"
             android:fontFamily="monospace"
-            android:padding="12dp"
+            android:padding="@dimen/space_l"
             android:textColor="@color/text_dark"
-            android:textSize="12sp" />
+            android:textSize="@dimen/text_mono" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginVertical="20dp"
+            android:layout_marginVertical="@dimen/space_section"
             android:background="@color/divider" />
 
+        <!-- Log -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -366,16 +464,16 @@
             android:text="@string/section_log"
             android:textAllCaps="true"
             android:textColor="@color/text_label"
-            android:textSize="12sp"
+            android:textSize="@dimen/text_section"
             android:textStyle="bold" />
 
         <ScrollView
             android:id="@+id/scrollLog"
             android:layout_width="match_parent"
-            android:layout_height="160dp"
-            android:layout_marginTop="8dp"
+            android:layout_height="@dimen/log_height"
+            android:layout_marginTop="@dimen/space_s"
             android:background="@drawable/bg_input_field"
-            android:padding="12dp"
+            android:padding="@dimen/space_l"
             android:scrollbars="vertical">
 
             <TextView
@@ -384,7 +482,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="monospace"
                 android:textColor="@color/text_dark"
-                android:textSize="12sp" />
+                android:textSize="@dimen/text_mono" />
         </ScrollView>
 
     </LinearLayout>

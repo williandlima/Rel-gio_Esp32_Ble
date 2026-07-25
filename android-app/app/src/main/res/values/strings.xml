@@ -21,12 +21,27 @@
     <string name="sync_done">Sincronizado às %1$s</string>
 
     <string name="section_marquee">Letreiro</string>
+    <string name="mode_scroll">Rolagem</string>
+    <string name="mode_lines">4 linhas</string>
+    <string name="mode_big">Ampliado</string>
     <string name="hint_marquee_text">Texto do letreiro</string>
     <string name="hint_marquee_duration">Duração (segundos)</string>
     <string name="hint_marquee_speed">Velocidade (ms por passo)</string>
+    <string name="hint_marquee_speed_big">Tempo por caractere (ms)</string>
+    <string name="hint_line_1">Linha 1</string>
+    <string name="hint_line_2">Linha 2</string>
+    <string name="hint_line_3">Linha 3</string>
+    <string name="hint_line_4">Linha 4</string>
     <string name="error_marquee_empty">Informe o texto do letreiro.</string>
+    <string name="error_lines_empty">Preencha pelo menos uma das linhas.</string>
     <string name="button_send_marquee">Enviar letreiro</string>
-    <string name="marquee_help">O letreiro ocupa as 4 linhas do display, rolando pelo tempo e velocidade configurados, e depois volta sozinho ao Modo Normal. Acentos são removidos: o display não tem esses caracteres.</string>
+    <string name="button_stop_marquee">Parar letreiro</string>
+    <string name="marquee_state_on">● Letreiro no ar</string>
+    <string name="marquee_state_off">○ Letreiro parado</string>
+    <string name="marquee_help_scroll">O texto rola nas 4 linhas pelo tempo configurado e depois volta sozinho ao Modo Normal.</string>
+    <string name="marquee_help_lines">Cada campo vai para uma linha do display, parado, pelo tempo configurado. Cada linha comporta 20 caracteres.</string>
+    <string name="marquee_help_big">Um caractere por vez, ampliado ocupando as 4 linhas. Use textos curtos — o tempo é por caractere, com mínimo de 200 ms.</string>
+    <string name="marquee_help_accents">Acentos são removidos no envio: o display não tem esses caracteres.</string>
 
     <string name="section_config">Configurações</string>
     <string name="unit_celsius">Celsius</string>

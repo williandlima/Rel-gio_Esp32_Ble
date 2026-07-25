@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Escala única de alturas: ações que ocupam a largura toda são as
+         mais altas; controles pareados (metade da largura) e segmentos de
+         seletor compartilham a altura menor, para as duas colunas ficarem
+         visualmente do mesmo peso. -->
+    <dimen name="height_action_primary">52dp</dimen>
+    <dimen name="height_action_secondary">48dp</dimen>
+    <dimen name="height_field">52dp</dimen>
+
+    <!-- Raios: metade da altura correspondente, para a pílula fechar certo
+         em cada tamanho (antes um raio único de 26dp servia os dois). -->
+    <dimen name="radius_action_primary">26dp</dimen>
+    <dimen name="radius_action_secondary">24dp</dimen>
+    <dimen name="radius_field">24dp</dimen>
+    <dimen name="radius_pill">14dp</dimen>
+
+    <dimen name="stroke_outline">1.5dp</dimen>
+    <dimen name="stroke_field">1dp</dimen>
+
+    <dimen name="space_xs">6dp</dimen>
+    <dimen name="space_s">8dp</dimen>
+    <dimen name="space_m">10dp</dimen>
+    <dimen name="space_l">12dp</dimen>
+    <dimen name="space_section">20dp</dimen>
+    <dimen name="screen_padding">20dp</dimen>
+    <dimen name="field_padding_h">16dp</dimen>
+
+    <dimen name="text_button">14sp</dimen>
+    <dimen name="text_button_compact_min">11sp</dimen>
+    <dimen name="text_button_compact_max">13sp</dimen>
+    <dimen name="text_body">13sp</dimen>
+    <dimen name="text_section">12sp</dimen>
+    <dimen name="text_mono">12sp</dimen>
+    <dimen name="text_title">17sp</dimen>
+
+    <dimen name="log_height">160dp</dimen>
+    <dimen name="header_icon">40dp</dimen>
+    <dimen name="header_icon_glyph">22dp</dimen>
+</resources>

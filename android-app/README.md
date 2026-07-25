@@ -54,11 +54,20 @@ firmware com BLE ativo), anunciando como **"Relogio-ESP32"**.
    relógio deve mudar para a hora atual (já ajustada pro fuso horário
    local do celular, ao contrário do teste manual anterior via nRF Connect
    que usava UTC puro).
-5. Preencha o texto/duração/velocidade do letreiro e toque em **"Enviar
-   letreiro"** — o display do relógio muda na hora pro Modo Letreiro,
-   rolando o texto pelo tempo configurado, e volta sozinho ao Modo Normal.
-   Acentos são removidos antes do envio ("ação" vira "acao"): o HD44780
-   não tem esses caracteres e mostraria símbolos aleatórios.
+5. Escolha o **modo do letreiro** no seletor de três segmentos e preencha
+   os campos que aparecerem:
+   - **Rolagem**: um texto rolando nas 4 linhas (velocidade = ms por passo).
+   - **4 linhas**: um campo por linha do display, conteúdo parado.
+   - **Ampliado**: um caractere por vez, gigante, ocupando as 4 linhas
+     (velocidade = ms por caractere, mínimo 200).
+
+   Toque em **"Enviar letreiro"** — o display muda na hora e volta sozinho
+   ao Modo Normal quando a duração acabar; **"Parar letreiro"** interrompe
+   antes disso. O selo ao lado do título fica verde enquanto há letreiro no
+   ar (a informação vem das notificações do próprio relógio, não de um
+   palpite do app). Acentos são removidos antes do envio ("ação" vira
+   "acao"): o HD44780 não tem esses caracteres e mostraria símbolos
+   aleatórios.
 6. Teste **"Salvar configuração"** (Celsius/Fahrenheit) e **"Ler atual"** —
    o resumo ("Unidade salva no relógio: ...") atualiza, e o link **"Ver
    JSON"** mostra/esconde o payload bruto recebido.
@@ -75,6 +84,17 @@ firmware com BLE ativo), anunciando como **"Relogio-ESP32"**.
 - **Escritas fatiadas em 20 bytes**: a API clássica não fragmenta payloads
   maiores que o MTU — ela trunca e não reenvia o resto. O firmware remonta
   os pedaços (ver `firmware/ble_service.py`).
+- **Semântica de cor**: verde = acionado/conectado (selo de conexão, botão
+  quando conectado, segmento selecionado, letreiro no ar), cinza =
+  desligado/desconectado/indisponível. Cada botão tem um seletor de estado
+  próprio (`res/drawable/bg_button_*.xml`) cobrindo normal, pressionado e
+  desabilitado — o estado desabilitado é uma cor de verdade, não
+  transparência.
+- **Proporções**: alturas, raios, margens e tamanhos de texto saem de
+  `res/values/dimens.xml`. Ações de largura total têm 52dp; controles
+  pareados e segmentos de seletor têm 48dp, com o raio ajustado a cada
+  altura. Os botões de meia largura usam texto auto-dimensionável para não
+  truncar rótulos longos.
 
 ## Estrutura
 

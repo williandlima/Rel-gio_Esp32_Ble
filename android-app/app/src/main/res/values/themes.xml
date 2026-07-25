@@ -11,4 +11,32 @@
         <item name="android:statusBarColor">@color/app_background</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
+
+    <!-- Segmento de seletor (Rolagem/4 linhas/Ampliado, Celsius/Fahrenheit).
+         Todos dividem a largura por igual e têm a mesma altura dos botões
+         secundários, para as linhas de controles ficarem alinhadas. -->
+    <style name="SegmentButton">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">@dimen/height_action_secondary</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/bg_toggle_segment</item>
+        <item name="android:button">@null</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/text_toggle_segment</item>
+        <item name="android:textSize">@dimen/text_button_compact_max</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <style name="InputField">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/height_field</item>
+        <item name="android:background">@drawable/bg_input_field</item>
+        <item name="android:paddingHorizontal">@dimen/field_padding_h</item>
+        <item name="android:textColor">@color/text_dark</item>
+        <item name="android:textColorHint">@color/muted_text</item>
+        <item name="android:textSize">@dimen/text_button</item>
+        <item name="android:importantForAutofill">no</item>
+        <item name="android:maxLines">1</item>
+    </style>
 </resources>
