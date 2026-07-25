@@ -14,12 +14,21 @@
 from machine import RTC
 from utime import sleep_ms, ticks_ms, ticks_diff, localtime
 
+import lcd_hd44780
+import ds18b20_sensor
+import ble_service
 from lcd_hd44780 import LCD4Bit
 from ds18b20_sensor import DS18B20
 from ble_service import ClockBLEService
 import config
 
-print("=== test_ble.py v3 (modo letreiro) ===")
+VERSION = "test_ble.py v3"
+print("=== ", VERSION, " ===")
+print(
+    "Modulos carregados:",
+    config.VERSION, "|", lcd_hd44780.VERSION, "|",
+    ds18b20_sensor.VERSION, "|", ble_service.VERSION,
+)
 
 WEEKDAYS = ("", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom")
 

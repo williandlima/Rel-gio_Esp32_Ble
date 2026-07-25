@@ -31,6 +31,9 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val versionName = packageManager.getPackageInfo(packageName, 0).versionName
+        appendLog("App versao: $versionName")
+
         ble = BleManager(applicationContext)
         ble.onLog = { msg -> runOnUiThread { appendLog(msg) } }
         ble.onConnectionStateChange = { connected ->

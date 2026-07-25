@@ -6,6 +6,8 @@ from utime import sleep_ms
 import onewire
 import ds18x20
 
+VERSION = "ds18b20_sensor v1"
+
 
 class DS18B20:
     def __init__(self, data_pin):

@@ -1,5 +1,7 @@
 # Configuração central de pinos, conforme SPECS.md (seção 2.2)
 
+VERSION = "config v1"
+
 # LCD NHD-0420E2Z-NSW-BBW - paralelo HD44780, modo 4 bits
 LCD_RS = 13
 LCD_E = 14

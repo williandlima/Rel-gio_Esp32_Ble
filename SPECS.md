@@ -170,3 +170,25 @@ para a próxima:
 5. **Modo Letreiro** — scroll + duração, acionado pelas mensagens recebidas
    via BLE (firmware + app).
 6. **Persistência** (NVS) e revisão final de todas as configurações.
+
+## 8. Convenção de Versionamento
+
+Adotada a partir do Modo Letreiro (etapa 5) funcionando de ponta a ponta,
+após dificuldades práticas em confirmar qual versão de um arquivo estava
+realmente rodando no ESP32/celular durante os testes:
+
+- **Firmware (MicroPython)**: todo arquivo `.py` reutilizável (`config.py`,
+  `lcd_hd44780.py`, `ds18b20_sensor.py`, `ble_service.py`, etc.) define uma
+  constante `VERSION = "nome_do_arquivo vN"` no topo. Incremente o número
+  ao editar o arquivo.
+- **Scripts principais** (`test_ble.py`, `test_ble_sem_sensor.py`, etc.):
+  imprimem a própria versão **e** a de todos os módulos que importam, logo
+  no início da execução — assim dá pra conferir no Shell do Thonny, com um
+  único print, se o ESP32 está mesmo com o código esperado antes de
+  investigar qualquer outro problema.
+- **App Android**: `versionCode`/`versionName` em `app/build.gradle.kts`,
+  incrementados a cada mudança relevante; exibidos no log da tela ao
+  conectar.
+- Referência do último marco totalmente validado (display + RTC interno +
+  BLE + Modo Letreiro, ponta a ponta com o app Android): commit
+  `3a645fc` desta branch.

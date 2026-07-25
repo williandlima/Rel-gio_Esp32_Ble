@@ -6,6 +6,8 @@
 from machine import Pin
 from utime import sleep_us, sleep_ms
 
+VERSION = "lcd_hd44780 v1"
+
 _LCD_CLEAR = 0x01
 _LCD_HOME = 0x02
 _LCD_ENTRY_MODE = 0x06          # incrementa cursor, sem shift do display
