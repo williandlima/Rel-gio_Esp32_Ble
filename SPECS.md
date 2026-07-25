@@ -217,9 +217,12 @@ realmente rodando no ESP32/celular durante os testes:
 - **App Android**: `versionCode`/`versionName` em `app/build.gradle.kts`,
   incrementados a cada mudança relevante; exibidos no log da tela ao
   conectar.
-- Referência do último marco totalmente validado (display + RTC interno +
-  BLE + Modo Letreiro, ponta a ponta com o app Android): commit
-  `3a645fc` desta branch.
+- **Último marco totalmente validado em bancada**: commit `ad77ab7` —
+  firmware `clock_app v1` / `ble_service v5` / `ds18b20_sensor v2` /
+  `lcd_hd44780 v2` / `storage v2` / `config v1`, app Android
+  `1.5-robustez-ble` (versionCode 6). Roadmap inteiro (etapas 1 a 6)
+  concluído, com a rodada de robustez da seção 9 aplicada.
+- Marco anterior (antes da revisão de código): commit `3a645fc`.
 - Persistência de configurações (`storage.py`, etapa 6): `test_ble.py`
   e `test_ble_sem_sensor.py` subiram para v4.
 - Redesign da interface do app Android (paleta e componentes conforme
