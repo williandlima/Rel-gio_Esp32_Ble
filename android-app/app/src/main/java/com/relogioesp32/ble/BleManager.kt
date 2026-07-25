@@ -9,14 +9,30 @@ import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import org.json.JSONObject
+import java.text.Normalizer
 import java.util.UUID
 
 // Cliente BLE do serviço GATT definido em firmware/ble_service.py (ver
 // SPECS.md seção 4.2). Usa a API nativa do Android (sem bibliotecas
 // externas) para minimizar dependências.
+//
+// Duas regras que o Android impõe e que este arquivo respeita:
+//
+// 1. Só pode existir UMA operação GATT em voo por vez (write, read ou
+//    escrita de descritor). Disparar a segunda antes do callback da
+//    primeira faz a segunda ser silenciosamente descartada. Por isso tudo
+//    passa por uma fila (opQueue) que só avança no callback.
+// 2. Todo BluetoothGatt precisa de close(). Sem isso cada ciclo
+//    conectar/desconectar vaza um registro de cliente GATT, e depois de
+//    algumas dezenas de ciclos o app simplesmente para de conectar.
 //
 // Nota: usa a API "clássica" (característica.value + callbacks sem o
 // parâmetro value), marcada como deprecated a partir da API 33, mas ainda
@@ -34,63 +50,128 @@ class BleManager(private val context: Context) {
         val CHAR_CONFIG: UUID = UUID.fromString("592e0d32-9975-435b-8986-1ab319153779")
         val CHAR_STATUS: UUID = UUID.fromString("8f86a231-9483-468f-b065-2082f2cadc88")
         private val CCCD_UUID: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
+
+        // O firmware remonta escritas fragmentadas (ver ble_service.py), e
+        // 20 bytes cabe até no MTU mínimo do BLE (23).
+        private const val CHUNK_SIZE = 20
+        private const val SCAN_TIMEOUT_MS = 15_000L
     }
 
     var onLog: ((String) -> Unit)? = null
     var onConnectionStateChange: ((connected: Boolean) -> Unit)? = null
+    var onReady: (() -> Unit)? = null
+    var onScanTimeout: (() -> Unit)? = null
     var onStatusChanged: ((json: String) -> Unit)? = null
     var onConfigRead: ((json: String) -> Unit)? = null
 
     private val bluetoothManager =
         context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     private val adapter: BluetoothAdapter? = bluetoothManager.adapter
+    private val handler = Handler(Looper.getMainLooper())
+
     private var gatt: BluetoothGatt? = null
     private var scanning = false
 
+    fun isBluetoothEnabled(): Boolean = adapter?.isEnabled == true
+
+    // ---- Descoberta ----
+
+    private val scanTimeoutRunnable = Runnable {
+        if (scanning) {
+            stopScan()
+            log("$DEVICE_NAME nao encontrado. Ele esta ligado e por perto?")
+            onScanTimeout?.invoke()
+        }
+    }
+
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            val device = result.device
-            @Suppress("MissingPermission")
-            if (device.name == DEVICE_NAME) {
-                log("Encontrado $DEVICE_NAME, conectando...")
-                stopScan()
-                connectToDevice(device)
-            }
+            val device = result.device ?: return
+            log("Encontrado $DEVICE_NAME, conectando...")
+            stopScan()
+            connectToDevice(device)
         }
 
         override fun onScanFailed(errorCode: Int) {
+            scanning = false
+            handler.removeCallbacks(scanTimeoutRunnable)
             log("Falha ao escanear (codigo $errorCode)")
+            onScanTimeout?.invoke()
         }
     }
 
     @Suppress("MissingPermission")
     fun startScan() {
         val scanner = adapter?.bluetoothLeScanner
-        if (adapter == null || adapter.isEnabled == false || scanner == null) {
+        if (adapter == null || !adapter.isEnabled || scanner == null) {
             log("Bluetooth nao disponivel ou desligado")
+            onScanTimeout?.invoke()
             return
         }
         if (scanning) return
         scanning = true
         log("Procurando $DEVICE_NAME...")
-        scanner.startScan(scanCallback)
+
+        // Filtro por nome no proprio radio: mais eficiente do que receber
+        // todo dispositivo BLE das redondezas e descartar em software.
+        // (O anuncio do ESP32 nao cabe o UUID de 128 bits junto do nome
+        // dentro dos 31 bytes do pacote, por isso filtramos pelo nome.)
+        val filters = listOf(ScanFilter.Builder().setDeviceName(DEVICE_NAME).build())
+        val settings = ScanSettings.Builder()
+            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .build()
+        scanner.startScan(filters, settings, scanCallback)
+        handler.postDelayed(scanTimeoutRunnable, SCAN_TIMEOUT_MS)
     }
 
     @Suppress("MissingPermission")
     fun stopScan() {
+        handler.removeCallbacks(scanTimeoutRunnable)
         if (!scanning) return
         scanning = false
-        adapter?.bluetoothLeScanner?.stopScan(scanCallback)
+        try {
+            adapter?.bluetoothLeScanner?.stopScan(scanCallback)
+        } catch (e: Exception) {
+            Log.w(TAG, "stopScan falhou", e)
+        }
     }
 
     @Suppress("MissingPermission")
     private fun connectToDevice(device: BluetoothDevice) {
+        closeGatt()  // garante que nao sobrou nenhum cliente GATT aberto
         gatt = device.connectGatt(context, false, gattCallback)
     }
 
+    // ---- Ciclo de vida ----
+
     @Suppress("MissingPermission")
     fun disconnect() {
+        stopScan()
+        // close() acontece em onConnectionStateChange(STATE_DISCONNECTED).
         gatt?.disconnect()
+    }
+
+    /** Libera tudo. Chamar quando a tela for destruída de vez. */
+    fun release() {
+        stopScan()
+        @Suppress("MissingPermission")
+        gatt?.disconnect()
+        closeGatt()
+    }
+
+    @Suppress("MissingPermission")
+    private fun closeGatt() {
+        val g = gatt ?: return
+        gatt = null
+        opQueue.clear()
+        currentOp = null
+        chunkQueue.clear()
+        chunkCharacteristic = null
+        try {
+            g.close()
+        } catch (e: Exception) {
+            Log.w(TAG, "close falhou", e)
+        }
     }
 
     private val gattCallback = object : BluetoothGattCallback() {
@@ -100,16 +181,14 @@ class BleManager(private val context: Context) {
                 BluetoothProfile.STATE_CONNECTED -> {
                     log("Conectado, solicitando MTU maior...")
                     onConnectionStateChange?.invoke(true)
-                    // MTU padrao (23 bytes) trunca payloads JSON maiores
-                    // (ex: texto do letreiro) - pede um MTU maior antes de
-                    // descobrir os servicos. O ESP32 ja aceita ate 256
-                    // (ver ble_service.py).
+                    // MTU padrao (23 bytes) limita o tamanho das
+                    // notificacoes de Status. O ESP32 aceita ate 256.
                     g.requestMtu(247)
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     log("Desconectado")
+                    closeGatt()
                     onConnectionStateChange?.invoke(false)
-                    gatt = null
                 }
             }
         }
@@ -126,7 +205,11 @@ class BleManager(private val context: Context) {
                 return
             }
             log("Servicos descobertos.")
-            enableStatusNotifications()
+            // A partir daqui as caracteristicas existem: so agora faz
+            // sentido liberar os botoes da tela.
+            enqueue(Op.EnableNotify(CHAR_STATUS))
+            enqueue(Op.Read(CHAR_CONFIG))
+            onReady?.invoke()
         }
 
         @Suppress("DEPRECATION")
@@ -138,6 +221,7 @@ class BleManager(private val context: Context) {
             if (status == BluetoothGatt.GATT_SUCCESS && characteristic.uuid == CHAR_CONFIG) {
                 onConfigRead?.invoke(String(characteristic.value ?: ByteArray(0)))
             }
+            finishOp()
         }
 
         @Suppress("DEPRECATION")
@@ -145,99 +229,178 @@ class BleManager(private val context: Context) {
             g: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
         ) {
+            // Notificacao: nao faz parte da fila, chega quando o ESP32 quiser.
             if (characteristic.uuid == CHAR_STATUS) {
                 onStatusChanged?.invoke(String(characteristic.value ?: ByteArray(0)))
             }
         }
 
-        @Suppress("MissingPermission")
         override fun onCharacteristicWrite(
             g: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            val ok = status == BluetoothGatt.GATT_SUCCESS
-            log("Escrita em ${characteristic.uuid}: ${if (ok) "OK" else "falhou ($status)"}")
-            if (ok) {
-                sendNextChunk()
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                log("Escrita em ${characteristic.uuid} falhou ($status)")
+                finishOp()
+                return
+            }
+            if (chunkQueue.isNotEmpty()) {
+                if (!sendNextChunk()) finishOp()
+            } else {
+                log("Escrita em ${characteristic.uuid}: OK")
+                finishOp()
             }
         }
+
+        override fun onDescriptorWrite(
+            g: BluetoothGatt,
+            descriptor: BluetoothGattDescriptor,
+            status: Int
+        ) {
+            log("Notificacoes de Status ativadas.")
+            finishOp()
+        }
+    }
+
+    // ---- Fila de operações GATT ----
+
+    private sealed class Op(val uuid: UUID) {
+        class Write(uuid: UUID, val payload: ByteArray) : Op(uuid)
+        class Read(uuid: UUID) : Op(uuid)
+        class EnableNotify(uuid: UUID) : Op(uuid)
+    }
+
+    private val opQueue = ArrayDeque<Op>()
+    private var currentOp: Op? = null
+    private val chunkQueue = ArrayDeque<ByteArray>()
+    private var chunkCharacteristic: BluetoothGattCharacteristic? = null
+
+    private fun enqueue(op: Op) {
+        opQueue.addLast(op)
+        if (currentOp == null) startNextOp()
+    }
+
+    private fun finishOp() {
+        currentOp = null
+        chunkCharacteristic = null
+        chunkQueue.clear()
+        startNextOp()
+    }
+
+    @Suppress("DEPRECATION", "MissingPermission")
+    private fun startNextOp() {
+        val g = gatt
+        if (g == null) {
+            opQueue.clear()
+            currentOp = null
+            return
+        }
+        val op = opQueue.removeFirstOrNull() ?: return
+        currentOp = op
+
+        val char = findCharacteristic(op.uuid)
+        if (char == null) {
+            log("Caracteristica nao encontrada: ${op.uuid}")
+            finishOp()
+            return
+        }
+
+        val started = when (op) {
+            is Op.Write -> {
+                // A API classica NAO fragmenta sozinha payloads maiores que
+                // o MTU: manda uma vez, truncado, e nao reenvia o resto. Por
+                // isso fatiamos aqui e o firmware remonta do outro lado.
+                chunkQueue.clear()
+                op.payload.toList().chunked(CHUNK_SIZE).forEach {
+                    chunkQueue.addLast(it.toByteArray())
+                }
+                chunkCharacteristic = char
+                sendNextChunk()
+            }
+            is Op.Read -> g.readCharacteristic(char)
+            is Op.EnableNotify -> {
+                g.setCharacteristicNotification(char, true)
+                val descriptor = char.getDescriptor(CCCD_UUID)
+                if (descriptor == null) {
+                    false
+                } else {
+                    descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                    g.writeDescriptor(descriptor)
+                }
+            }
+        }
+
+        if (!started) {
+            log("Nao foi possivel iniciar a operacao GATT")
+            finishOp()
+        }
+    }
+
+    @Suppress("DEPRECATION", "MissingPermission")
+    private fun sendNextChunk(): Boolean {
+        val g = gatt ?: return false
+        val char = chunkCharacteristic ?: return false
+        val chunk = chunkQueue.removeFirstOrNull() ?: return false
+        char.value = chunk
+        return g.writeCharacteristic(char)
     }
 
     private fun findCharacteristic(uuid: UUID): BluetoothGattCharacteristic? {
         return gatt?.getService(SERVICE_UUID)?.getCharacteristic(uuid)
     }
 
-    // A API classica de escrita do Android NAO fragmenta sozinha payloads
-    // maiores que o MTU negociado - ela manda uma unica vez, truncado, e
-    // nao reenvia o resto. Por isso partimos o payload em fatias pequenas
-    // (seguras mesmo com o MTU minimo de 23 bytes) e mandamos uma de cada
-    // vez, esperando a confirmacao (onCharacteristicWrite) antes da
-    // proxima - o ESP32 remonta os pedacos (ver ble_service.py).
-    private val chunkQueue = ArrayDeque<ByteArray>()
-    private var chunkCharacteristic: BluetoothGattCharacteristic? = null
-    private val CHUNK_SIZE = 20
-
-    @Suppress("MissingPermission")
-    private fun writeCharacteristic(uuid: UUID, payload: ByteArray) {
-        val g = gatt
-        if (g == null) {
-            log("Nao conectado")
-            return
-        }
-        val char = findCharacteristic(uuid)
-        if (char == null) {
-            log("Caracteristica nao encontrada: $uuid")
-            return
-        }
-        chunkQueue.clear()
-        chunkQueue.addAll(payload.toList().chunked(CHUNK_SIZE).map { it.toByteArray() })
-        chunkCharacteristic = char
-        sendNextChunk()
-    }
-
-    @Suppress("DEPRECATION", "MissingPermission")
-    private fun sendNextChunk() {
-        val g = gatt ?: return
-        val char = chunkCharacteristic ?: return
-        val chunk = chunkQueue.removeFirstOrNull() ?: return
-        char.value = chunk
-        g.writeCharacteristic(char)
-    }
+    // ---- API da tela ----
 
     fun writeSetDateTime(epochSeconds: Long) {
-        val json = "{\"epoch\": $epochSeconds}"
-        writeCharacteristic(CHAR_SET_DATETIME, json.toByteArray())
+        val json = JSONObject().put("epoch", epochSeconds).toString()
+        write(CHAR_SET_DATETIME, json)
     }
 
     fun writeMarquee(text: String, durationS: Int, speedMs: Int) {
-        val safeText = text.replace("\"", "'")
-        val json = "{\"text\": \"$safeText\", \"duration_s\": $durationS, \"speed_ms\": $speedMs}"
-        writeCharacteristic(CHAR_MARQUEE, json.toByteArray())
+        val json = JSONObject()
+            .put("text", toDisplayableAscii(text))
+            .put("duration_s", durationS)
+            .put("speed_ms", speedMs)
+            .toString()
+        write(CHAR_MARQUEE, json)
     }
 
     fun writeConfig(tempUnit: String) {
-        val json = "{\"temp_unit\": \"$tempUnit\"}"
-        writeCharacteristic(CHAR_CONFIG, json.toByteArray())
+        val json = JSONObject().put("temp_unit", tempUnit).toString()
+        write(CHAR_CONFIG, json)
     }
 
-    @Suppress("MissingPermission")
     fun readConfig() {
-        val g = gatt ?: return
-        val char = findCharacteristic(CHAR_CONFIG) ?: return
-        g.readCharacteristic(char)
+        if (gatt == null) {
+            log("Nao conectado")
+            return
+        }
+        enqueue(Op.Read(CHAR_CONFIG))
     }
 
-    @Suppress("MissingPermission")
-    private fun enableStatusNotifications() {
-        val g = gatt ?: return
-        val char = findCharacteristic(CHAR_STATUS) ?: return
-        g.setCharacteristicNotification(char, true)
-        val descriptor = char.getDescriptor(CCCD_UUID) ?: return
-        @Suppress("DEPRECATION")
-        descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-        @Suppress("DEPRECATION")
-        g.writeDescriptor(descriptor)
+    private fun write(uuid: UUID, json: String) {
+        if (gatt == null) {
+            log("Nao conectado")
+            return
+        }
+        enqueue(Op.Write(uuid, json.toByteArray(Charsets.UTF_8)))
+    }
+
+    /**
+     * O display do relógio é um HD44780: ele não tem acentos nem cedilha no
+     * gerador de caracteres, e mostraria símbolos aleatórios no lugar. Aqui
+     * "ação" vira "acao" antes de ir para o ar — o que o usuário digitou
+     * continua legível, só sem os acentos.
+     */
+    private fun toDisplayableAscii(text: String): String {
+        val semAcento = Normalizer.normalize(text, Normalizer.Form.NFD)
+            .replace(Regex("\\p{Mn}+"), "")
+        return buildString {
+            for (ch in semAcento) {
+                append(if (ch.code in 0x20..0x7D) ch else '?')
+            }
+        }
     }
 
     private fun log(msg: String) {

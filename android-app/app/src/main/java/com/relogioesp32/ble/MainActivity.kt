@@ -1,7 +1,6 @@
 package com.relogioesp32.ble
 
 import android.Manifest
-import android.bluetooth.BluetoothAdapter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -29,7 +28,7 @@ class MainActivity : AppCompatActivity() {
         if (results.values.all { it }) {
             ble.startScan()
         } else {
-            appendLog("Permissoes negadas - nao e possivel usar Bluetooth.")
+            appendLog(getString(R.string.log_permissions_denied))
             setDisconnectedState()
         }
     }
@@ -40,7 +39,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         val versionName = packageManager.getPackageInfo(packageName, 0).versionName
-        appendLog("App versao: $versionName")
+        appendLog(getString(R.string.log_app_version, versionName))
 
         ble = BleManager(applicationContext)
         ble.onLog = { msg -> runOnUiThread { appendLog(msg) } }
@@ -49,6 +48,11 @@ class MainActivity : AppCompatActivity() {
                 if (connected) setConnectedState() else setDisconnectedState()
             }
         }
+        // Só depois da descoberta de serviços as características existem —
+        // liberar os botões antes disso deixava o usuário tocar em algo que
+        // falharia com "caracteristica nao encontrada".
+        ble.onReady = { runOnUiThread { setBleControlsEnabled(true) } }
+        ble.onScanTimeout = { runOnUiThread { setDisconnectedState() } }
         ble.onStatusChanged = { json -> runOnUiThread { binding.textStatus.text = json } }
         ble.onConfigRead = { json -> runOnUiThread { showConfig(json) } }
 
@@ -69,11 +73,10 @@ class MainActivity : AppCompatActivity() {
             // fuso local, para o RTC do ESP32 exibir a hora certa da regiao.
             val nowUtcMillis = System.currentTimeMillis()
             val offsetMillis = TimeZone.getDefault().getOffset(nowUtcMillis)
-            val localEpochSeconds = (nowUtcMillis + offsetMillis) / 1000
-            ble.writeSetDateTime(localEpochSeconds)
+            ble.writeSetDateTime((nowUtcMillis + offsetMillis) / 1000)
 
             val now = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-            binding.textSyncStatus.text = "Sincronizado as $now"
+            binding.textSyncStatus.text = getString(R.string.sync_done, now)
             binding.textSyncStatus.setTextColor(getColor(R.color.text_success))
         }
 
@@ -92,6 +95,10 @@ class MainActivity : AppCompatActivity() {
         binding.buttonSaveConfig.setOnClickListener {
             val unit = if (binding.radioFahrenheit.isChecked) "F" else "C"
             ble.writeConfig(unit)
+            // Relê logo em seguida para o resumo mostrar o que o relógio de
+            // fato gravou, e não apenas o que pedimos. A fila do BleManager
+            // garante que a leitura só sai depois da escrita terminar.
+            ble.readConfig()
         }
 
         binding.buttonReadConfig.setOnClickListener { ble.readConfig() }
@@ -99,29 +106,34 @@ class MainActivity : AppCompatActivity() {
         binding.textConfigJsonLink.setOnClickListener {
             jsonVisible = !jsonVisible
             binding.textConfig.visibility = if (jsonVisible) View.VISIBLE else View.GONE
-            binding.textConfigJsonLink.text = if (jsonVisible) "Ocultar JSON" else "Ver JSON"
+            binding.textConfigJsonLink.setText(
+                if (jsonVisible) R.string.link_hide_json else R.string.link_show_json
+            )
         }
     }
 
     private fun showConfig(json: String) {
         binding.textConfig.text = json
         val unit = try {
-            JSONObject(json).optString("temp_unit", "-")
+            JSONObject(json).optString("temp_unit", "")
         } catch (e: Exception) {
-            "-"
+            ""
         }
-        val friendlyUnit = when (unit) {
-            "F" -> "Fahrenheit"
-            "C" -> "Celsius"
-            else -> "-"
+        when (unit) {
+            "F" -> binding.textConfigSummary.text =
+                getString(R.string.config_summary, getString(R.string.unit_fahrenheit))
+            "C" -> binding.textConfigSummary.text =
+                getString(R.string.config_summary, getString(R.string.unit_celsius))
+            else -> binding.textConfigSummary.setText(R.string.config_summary_unknown)
         }
-        binding.textConfigSummary.text = "Unidade salva no relogio: $friendlyUnit"
+        // Mantém o seletor coerente com o que está gravado no relógio.
+        if (unit == "F") binding.radioFahrenheit.isChecked = true
+        else if (unit == "C") binding.radioCelsius.isChecked = true
     }
 
     private fun requestPermissionsAndScan() {
-        val adapter = BluetoothAdapter.getDefaultAdapter()
-        if (adapter == null || !adapter.isEnabled) {
-            appendLog("Ative o Bluetooth do celular primeiro.")
+        if (!ble.isBluetoothEnabled()) {
+            appendLog(getString(R.string.log_enable_bluetooth))
             setDisconnectedState()
             return
         }
@@ -148,45 +160,41 @@ class MainActivity : AppCompatActivity() {
         binding.scrollLog.post { binding.scrollLog.fullScroll(View.FOCUS_DOWN) }
     }
 
-    // O botao de topo tem 3 estados visuais, igual a maioria dos apps de
-    // BLE (nRF Connect, etc.): navy = desconectado (pronto pra conectar),
-    // cinza/muted = conectando (aguardando o ESP32 responder), taupe =
-    // conectado (pronto pra desconectar). Enquanto nao conectado, as
-    // demais acoes ficam desabilitadas para nao gerar escritas BLE sem
-    // efeito nenhum.
+    // O botao de topo e o selo de status tem 3 estados, igual a maioria dos
+    // apps de BLE (nRF Connect, etc.): navy = desconectado (pronto pra
+    // conectar), cinza = conectando, taupe/verde = conectado. Enquanto nao
+    // estiver tudo pronto, as demais acoes ficam desabilitadas.
     private fun setDisconnectedState() {
         isConnected = false
-        binding.buttonConnect.isEnabled = true
-        binding.buttonConnect.text = "Conectar ao Relogio-ESP32"
+        binding.buttonConnect.setText(R.string.button_connect)
         binding.buttonConnect.setBackgroundResource(R.drawable.bg_button_navy)
         binding.buttonConnect.setTextColor(getColor(R.color.primary_navy_text))
-        binding.textConnectionBadge.text = "○ Desconectado"
+        binding.textConnectionBadge.setText(R.string.badge_disconnected)
         binding.textConnectionBadge.setBackgroundResource(R.drawable.bg_status_pill_disconnected)
         binding.textConnectionBadge.setTextColor(getColor(R.color.text_label))
         setBleControlsEnabled(false)
     }
 
     private fun setConnectingState() {
-        // Fica clicavel (nao trava o usuario caso o ESP32 nunca seja
-        // encontrado) - tocar de novo so reforca a mesma tentativa de scan.
-        binding.buttonConnect.text = "Conectando..."
+        // Continua clicavel: se o ESP32 nunca aparecer, o usuario nao fica
+        // preso (e o scan tem timeout proprio no BleManager).
+        binding.buttonConnect.setText(R.string.button_connecting)
         binding.buttonConnect.setBackgroundResource(R.drawable.bg_button_muted)
         binding.buttonConnect.setTextColor(getColor(R.color.muted_text))
-        binding.textConnectionBadge.text = "Conectando..."
+        binding.textConnectionBadge.setText(R.string.badge_connecting)
         binding.textConnectionBadge.setBackgroundResource(R.drawable.bg_status_pill_muted)
         binding.textConnectionBadge.setTextColor(getColor(R.color.muted_text))
     }
 
     private fun setConnectedState() {
         isConnected = true
-        binding.buttonConnect.isEnabled = true
-        binding.buttonConnect.text = "Desconectar"
+        binding.buttonConnect.setText(R.string.button_disconnect)
         binding.buttonConnect.setBackgroundResource(R.drawable.bg_button_taupe)
         binding.buttonConnect.setTextColor(getColor(R.color.taupe_text))
-        binding.textConnectionBadge.text = "● Conectado"
+        binding.textConnectionBadge.setText(R.string.badge_connected)
         binding.textConnectionBadge.setBackgroundResource(R.drawable.bg_status_pill_connected)
         binding.textConnectionBadge.setTextColor(getColor(R.color.text_success))
-        setBleControlsEnabled(true)
+        // Os controles só liberam em onReady (serviços descobertos).
     }
 
     private fun setBleControlsEnabled(enabled: Boolean) {
@@ -205,7 +213,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        ble.disconnect()
+        ble.release()
         super.onDestroy()
     }
 }

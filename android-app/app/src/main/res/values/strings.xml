@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Relógio ESP32</string>
+
+    <string name="header_title">Relógio ESP32</string>
+    <string name="header_subtitle">Configuração via Bluetooth (BLE)</string>
+
+    <string name="badge_disconnected">○ Desconectado</string>
+    <string name="badge_connecting">Conectando…</string>
+    <string name="badge_connected">● Conectado</string>
+
+    <!-- "Relogio-ESP32" sem acento de propósito: é o nome anunciado pelo
+         firmware no ar (ver ble_service.py), não um texto de interface. -->
+    <string name="button_connect">Conectar ao Relogio-ESP32</string>
+    <string name="button_connecting">Conectando…</string>
+    <string name="button_disconnect">Desconectar</string>
+
+    <string name="section_datetime">Data e hora</string>
+    <string name="button_sync_time">Sincronizar hora com o celular</string>
+    <string name="sync_never">Ainda não sincronizado.</string>
+    <string name="sync_done">Sincronizado às %1$s</string>
+
+    <string name="section_marquee">Letreiro</string>
+    <string name="hint_marquee_text">Texto do letreiro</string>
+    <string name="hint_marquee_duration">Duração (segundos)</string>
+    <string name="hint_marquee_speed">Velocidade (ms por passo)</string>
+    <string name="error_marquee_empty">Informe o texto do letreiro.</string>
+    <string name="button_send_marquee">Enviar letreiro</string>
+    <string name="marquee_help">O letreiro ocupa as 4 linhas do display, rolando pelo tempo e velocidade configurados, e depois volta sozinho ao Modo Normal. Acentos são removidos: o display não tem esses caracteres.</string>
+
+    <string name="section_config">Configurações</string>
+    <string name="unit_celsius">Celsius</string>
+    <string name="unit_fahrenheit">Fahrenheit</string>
+    <string name="button_save_config">Salvar configuração</string>
+    <string name="button_read_config">Ler atual</string>
+    <string name="config_summary">Unidade salva no relógio: %1$s</string>
+    <string name="config_summary_unknown">Unidade salva no relógio: —</string>
+    <string name="link_show_json">Ver JSON</string>
+    <string name="link_hide_json">Ocultar JSON</string>
+
+    <string name="section_status">Status (notificações)</string>
+    <string name="section_log">Log</string>
+
+    <string name="log_app_version">App versão: %1$s</string>
+    <string name="log_permissions_denied">Permissões negadas — não é possível usar Bluetooth.</string>
+    <string name="log_enable_bluetooth">Ative o Bluetooth do celular primeiro.</string>
+</resources>

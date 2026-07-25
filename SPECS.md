@@ -111,6 +111,22 @@ Linha 4: [status BLE / livre]   <- indicador de conexão BLE, ou em branco
 GATT customizado, payloads em **JSON** (texto legível, fácil de debugar
 inclusive com apps BLE genéricos como nRF Connect).
 
+Sem pareamento/bonding e sem autenticação nas características: qualquer
+aparelho ao alcance consegue ajustar a hora, mandar letreiro ou trocar a
+unidade de temperatura. É uma decisão consciente para um relógio de mesa
+doméstico — se o projeto um dia sair desse contexto, é o primeiro ponto a
+revisar.
+
+**Limites do transporte** (aprendidos na prática, ver seção 8):
+
+- O buffer de cada característica no MicroPython é de 20 bytes por padrão;
+  o firmware chama `gatts_set_buffer(handle, 512)` para aceitar payloads
+  inteiros e devolver leituras completas.
+- A API clássica de escrita do Android não fragmenta payloads maiores que
+  o MTU — trunca e não reenvia. O app fatia em pedaços de 20 bytes e o
+  firmware remonta até formar um JSON válido (com timeout de 3 s para
+  descartar fragmento órfão).
+
 ### 4.2 Serviço e Características
 
 Serviço: `8da7ea58-d7a9-4740-899d-e790d280bbec`
@@ -125,7 +141,17 @@ Serviço: `8da7ea58-d7a9-4740-899d-e790d280bbec`
 > **Nota sobre `epoch` (SetDateTime)**: é o epoch Unix padrão (segundos
 > desde 1970-01-01), o mesmo formato que `System.currentTimeMillis()/1000`
 > no Android. O firmware converte internamente para a época usada pelo
-> `machine.RTC` do ESP32 (2000-01-01).
+> `machine.RTC` do ESP32 (2000-01-01). Valores anteriores a 2020 são
+> recusados pelo firmware.
+
+> **Cancelar o letreiro**: enviar `{"text": ""}` ou `{"duration_s": 0}` na
+> característica Marquee volta imediatamente ao Modo Normal. A duração é
+> limitada a 3600 s e a velocidade tem piso de 50 ms por passo.
+
+> **Texto do letreiro**: o HD44780 não tem acentos no gerador de
+> caracteres. O app remove os acentos antes de enviar ("ação" → "acao") e
+> o firmware troca por `?` qualquer caractere fora da faixa imprimível,
+> como rede de segurança para escritas feitas por apps BLE genéricos.
 
 ### 4.3 App Android
 
@@ -207,3 +233,45 @@ realmente rodando no ESP32/celular durante os testes:
   "Conectado" / cinza "Desconectado" / "Conectando..."), e resumo de
   configuração + "Ver JSON" lado a lado, conforme print de referência
   mais detalhado: `versionCode 5` / `versionName "1.4-header-status"`.
+- Rodada de robustez após revisão de código (ver seção 9):
+  `ble_service v5`, `ds18b20_sensor v2`, `lcd_hd44780 v2`, `storage v2`,
+  `clock_app v1` (novo) no firmware; `versionCode 6` / `versionName
+  "1.5-robustez-ble"` no app.
+
+## 9. Revisão de Código — Correções Aplicadas
+
+Revisão de fragilidades feita com o projeto já funcionando de ponta a
+ponta. As correções abaixo mantêm o comportamento validado em bancada e
+atacam o que quebraria em uso prolongado:
+
+**Transporte BLE**
+
+- `gatts_set_buffer(512)` em todas as características. O padrão de 20
+  bytes do MicroPython era a causa raiz da truncagem histórica: era o
+  ESP32, e não o Android, que cortava as escritas — e uma leitura de
+  Status vinha pela metade.
+- No app, `gatt.close()` em toda desconexão. Sem isso cada ciclo
+  conectar/desconectar vazava um registro de cliente GATT até o Android
+  parar de conectar em silêncio.
+- Fila serializada de operações GATT no app: o Android só aceita uma
+  operação em voo por vez.
+
+**Tempo real / responsividade**
+
+- O IRQ do BLE passou a apenas enfileirar bytes; parse, callbacks e
+  gravação em flash (NVS) acontecem no laço principal. Gravar na flash de
+  dentro do IRQ do NimBLE era risco concreto de travar a placa.
+- Leitura do DS18B20 dividida em duas etapas: os 750 ms de conversão não
+  bloqueiam mais o laço, que era o motivo de o relógio pular segundos.
+- LCD com cache por linha: só o que mudou vai ao barramento.
+- Laço com granularidade de 20 ms (era 1 s), então o BLE responde quase
+  na hora sem custo perceptível de CPU.
+
+**Tolerância a falha**
+
+- `try/except` no laço principal: erro pontual não mata mais o firmware.
+- Sensor ausente ou com erro de CRC não impede o boot, e é redetectado
+  sozinho a cada 30 s.
+- Buffer de remontagem com timeout, payload validado por tipo, epoch
+  absurdo recusado, NVS indisponível tolerada.
+- Scan do app com timeout de 15 s, em vez de varrer para sempre.

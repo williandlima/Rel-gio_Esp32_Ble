@@ -43,12 +43,13 @@ firmware com BLE ativo), anunciando como **"Relogio-ESP32"**.
    emulador) conectado via cabo USB, com depuração USB ativada.
 2. Toque em **"Conectar ao Relogio-ESP32"** (azul-marinho) — conceda as
    permissões de Bluetooth/Localização pedidas. O botão muda pra
-   **"Conectando..."** (cinza) enquanto procura o dispositivo.
-3. Quando conectar, o botão fica **"Desconectar"** (castanho/taupe) e as
-   demais ações (antes desabilitadas/apagadas) voltam a ficar clicáveis.
-   O app assina as notificações de **Status** automaticamente (deve
-   começar a aparecer `{"mode": "normal", "temp_c": ..., "connected": true}`
-   a cada ~5s na seção "Status (notificações)").
+   **"Conectando…"** (cinza) enquanto procura o dispositivo. Se o relógio
+   não aparecer em 15 s, o app desiste sozinho e avisa no log.
+3. Quando conectar, o botão fica **"Desconectar"** (castanho/taupe) e o
+   selo do topo fica verde. As demais ações só ficam clicáveis depois que
+   os serviços BLE são descobertos — é por isso que elas podem levar um
+   instante a mais para acender. O app assina as notificações de
+   **Status** e lê a configuração atual automaticamente.
 4. Toque em **"Sincronizar hora com o celular"** — a hora do display do
    relógio deve mudar para a hora atual (já ajustada pro fuso horário
    local do celular, ao contrário do teste manual anterior via nRF Connect
@@ -56,9 +57,24 @@ firmware com BLE ativo), anunciando como **"Relogio-ESP32"**.
 5. Preencha o texto/duração/velocidade do letreiro e toque em **"Enviar
    letreiro"** — o display do relógio muda na hora pro Modo Letreiro,
    rolando o texto pelo tempo configurado, e volta sozinho ao Modo Normal.
+   Acentos são removidos antes do envio ("ação" vira "acao"): o HD44780
+   não tem esses caracteres e mostraria símbolos aleatórios.
 6. Teste **"Salvar configuração"** (Celsius/Fahrenheit) e **"Ler atual"** —
    o resumo ("Unidade salva no relógio: ...") atualiza, e o link **"Ver
    JSON"** mostra/esconde o payload bruto recebido.
+
+## Notas de implementação
+
+- **Fila de operações GATT**: o Android só aceita uma operação por vez
+  (write/read/descritor). O `BleManager` serializa tudo numa fila que só
+  avança no callback — sem isso, dois toques rápidos em botões diferentes
+  intercalavam fragmentos e o firmware remontava lixo.
+- **`gatt.close()`**: chamado em toda desconexão. Sem isso, cada ciclo
+  conectar/desconectar vaza um registro de cliente GATT, e depois de
+  algumas dezenas de ciclos o Android para de conectar sem dar erro.
+- **Escritas fatiadas em 20 bytes**: a API clássica não fragmenta payloads
+  maiores que o MTU — ela trunca e não reenvia o resto. O firmware remonta
+  os pedaços (ver `firmware/ble_service.py`).
 
 ## Estrutura
 
@@ -66,8 +82,12 @@ firmware com BLE ativo), anunciando como **"Relogio-ESP32"**.
 app/src/main/
   AndroidManifest.xml
   java/com/relogioesp32/ble/
-    MainActivity.kt      Tela única, permissões e callbacks de UI
-    BleManager.kt         Cliente BLE (scan, connect, GATT read/write/notify)
+    MainActivity.kt       Tela única, permissões e estados da UI
+    BleManager.kt         Cliente BLE (scan, connect, fila de operações GATT)
   res/layout/
     activity_main.xml     Layout da tela única
+  res/values/
+    strings.xml           Todos os textos da interface
+    colors.xml            Paleta do design
+    themes.xml            Tema sem ActionBar, barra de status clara
 ```
