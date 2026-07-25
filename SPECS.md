@@ -167,8 +167,12 @@ Serviço: `8da7ea58-d7a9-4740-899d-e790d280bbec`
   todas ficarem vazias, equivale a cancelar. Cada linha comporta 20
   caracteres (o excedente é cortado pelo driver do display).
 - Em `big`, `speed_ms` é o tempo **por caractere**, com piso de 200 ms. Os
-  glifos vêm de `firmware/bigfont.py` (matriz 4x5 escalada 3x, ocupando 15
-  das 20 colunas, centralizada). Caracteres sem glifo próprio caem em `?`.
+  glifos vêm de `firmware/bigfont.py` (matriz 4x5 escalada 4x, preenchendo
+  exatamente as 20 colunas). Caracteres sem glifo próprio caem em `?`. O
+  "pixel aceso" é um caractere gravado na CGRAM do próprio HD44780 no
+  boot (`lcd.create_char`), e não uma posição da ROM de caracteres — a
+  posição usada na primeira versão (0xFF) não é um bloco sólido em todas
+  as variantes do controlador, e o letreiro saía ilegível.
 - O Status informa `marquee_mode` junto de `mode` enquanto houver letreiro
   no ar, para o app poder mostrar qual modo está ativo.
 
@@ -267,6 +271,8 @@ realmente rodando no ESP32/celular durante os testes:
 - Três modos de letreiro + acabamento da interface: `clock_app v2` e
   `bigfont v1` (novo) no firmware; `versionCode 7` / `versionName
   "1.6-modos-letreiro"` no app.
+- Correção do Modo Ampliado (bloco ilegível na bancada): `lcd_hd44780 v3`
+  (bloco via CGRAM) e `bigfont v2`.
 
 ## 9. Revisão de Código — Correções Aplicadas
 

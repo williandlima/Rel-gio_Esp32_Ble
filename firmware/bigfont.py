@@ -2,13 +2,23 @@
 # desenhado ocupando as 4 linhas do display, um de cada vez.
 #
 # Cada glifo é uma matriz de 4 linhas x 5 colunas ("#" = aceso). Na hora de
-# desenhar, cada coluna vira `scale` colunas do display usando o caractere
-# 0xFF do HD44780 (bloco cheio), então 5 x 3 = 15 colunas centralizadas nas
-# 20 do display.
+# desenhar, cada coluna vira `scale` colunas do display, então com scale=4 o
+# glifo ocupa exatamente as 20 colunas.
+#
+# O "pixel" aceso NÃO usa nenhuma posição da ROM de caracteres: o bloco cheio
+# é gravado na CGRAM pelo próprio firmware (ver BLOCK_BITMAP e
+# LCD4Bit.create_char). Depender da ROM era frágil — a posição 0xFF só é um
+# bloco sólido em parte das variantes do controlador, e nas demais o letreiro
+# saía desenhado com um símbolo qualquer, ilegível.
 
-VERSION = "bigfont v1"
+VERSION = "bigfont v2 (bloco via CGRAM)"
 
-_ON = "\xff"   # 0xFF: bloco totalmente preenchido no gerador do HD44780
+# Índice do caractere customizado usado como "pixel aceso". Evita o índice 0
+# para não trafegar byte nulo nas strings.
+BLOCK_INDEX = 1
+BLOCK_BITMAP = (0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F)
+
+_ON = chr(BLOCK_INDEX)
 _OFF = " "
 
 GLYPH_COLS = 5
@@ -17,7 +27,7 @@ GLYPH_ROWS = 4
 _GLYPHS = {
     " ": ("     ", "     ", "     ", "     "),
     "A": (".###.", "#...#", "#####", "#...#"),
-    "B": ("####.", "#...#", "####.", "####."),
+    "B": ("####.", "#..#.", "####.", "####."),
     "C": (".####", "#....", "#....", ".####"),
     "D": ("####.", "#...#", "#...#", "####."),
     "E": ("#####", "#....", "####.", "#####"),
@@ -29,18 +39,18 @@ _GLYPHS = {
     "K": ("#..#.", "###..", "###..", "#..#."),
     "L": ("#....", "#....", "#....", "#####"),
     "M": ("#...#", "##.##", "#.#.#", "#...#"),
-    "N": ("#...#", "##..#", "#..##", "#...#"),
+    "N": ("##..#", "#.#.#", "#.#.#", "#..##"),
     "O": (".###.", "#...#", "#...#", ".###."),
     "P": ("####.", "#...#", "####.", "#...."),
-    "Q": (".###.", "#...#", "#.###", ".####"),
+    "Q": (".###.", "#...#", "#..#.", ".##.#"),
     "R": ("####.", "#...#", "####.", "#..##"),
     "S": (".####", "##...", "...##", "####."),
     "T": ("#####", "..#..", "..#..", "..#.."),
     "U": ("#...#", "#...#", "#...#", ".###."),
     "V": ("#...#", "#...#", ".#.#.", "..#.."),
-    "W": ("#...#", "#.#.#", "#####", "#...#"),
-    "X": ("#...#", ".###.", ".###.", "#...#"),
-    "Y": ("#...#", ".###.", "..#..", "..#.."),
+    "W": ("#...#", "#.#.#", "#.#.#", ".#.#."),
+    "X": ("#...#", ".#.#.", ".#.#.", "#...#"),
+    "Y": ("#...#", ".#.#.", "..#..", "..#.."),
     "Z": ("#####", "..##.", ".##..", "#####"),
     "0": (".###.", "#..##", "##..#", ".###."),
     "1": ("..#..", ".##..", "..#..", ".###."),
@@ -50,7 +60,7 @@ _GLYPHS = {
     "5": ("#####", "####.", "...##", "####."),
     "6": (".###.", "#....", "####.", ".###."),
     "7": ("#####", "...#.", "..#..", ".#..."),
-    "8": (".###.", ".###.", "#...#", ".###."),
+    "8": (".###.", "#...#", ".###.", ".###."),
     "9": (".###.", "####.", "...#.", ".###."),
     ".": (".....", ".....", ".....", "..##."),
     ",": (".....", ".....", "..##.", ".##.."),
@@ -87,7 +97,7 @@ def has_glyph(ch):
     return ch.upper() in _GLYPHS
 
 
-def render(ch, cols=20, rows=4, scale=3):
+def render(ch, cols=20, rows=4, scale=4):
     """Devolve `rows` strings de `cols` caracteres com o caractere ampliado,
     já centralizado horizontalmente e pronto para write_line()."""
     glyph = _GLYPHS.get(ch.upper(), _FALLBACK)

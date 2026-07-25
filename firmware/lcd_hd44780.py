@@ -6,7 +6,7 @@
 from machine import Pin
 from utime import sleep_us, sleep_ms
 
-VERSION = "lcd_hd44780 v2 (cache de linha)"
+VERSION = "lcd_hd44780 v3 (cache de linha + CGRAM)"
 
 _LCD_CLEAR = 0x01
 _LCD_HOME = 0x02
@@ -14,6 +14,7 @@ _LCD_ENTRY_MODE = 0x06          # incrementa cursor, sem shift do display
 _LCD_DISPLAY_ON = 0x0C          # display on, cursor off, blink off
 _LCD_FUNCTION_SET_4BIT = 0x28   # 4 bits, 2 linhas (N=1), fonte 5x8
 _LCD_SET_DDRAM_ADDR = 0x80
+_LCD_SET_CGRAM_ADDR = 0x40
 
 # Endereços iniciais de cada linha, padrão para displays 20x4 (controlador
 # HD44780 só endereça 2 "linhas" internamente; linhas 3 e 4 usam offset).
@@ -85,6 +86,23 @@ class LCD4Bit:
     def clear(self):
         self._command(_LCD_CLEAR)
         sleep_ms(2)  # comando de clear é mais lento
+        self._line_cache = [None] * self.rows
+
+    def create_char(self, index, bitmap):
+        """Grava um caractere próprio na CGRAM (índices 0..7).
+
+        `bitmap` são 8 inteiros de 5 bits, de cima para baixo. Serve para não
+        depender de posições da ROM de caracteres, que variam entre variantes
+        do controlador — o bloco cheio usado pelo letreiro ampliado, por
+        exemplo, não está no mesmo lugar em todas elas.
+        """
+        index &= 0x07
+        self._command(_LCD_SET_CGRAM_ADDR | (index << 3))
+        for line in bitmap:
+            self._write_byte(line & 0x1F, rs=1)
+        # Volta o endereçamento para a DDRAM, senão a próxima escrita cairia
+        # na CGRAM em vez de na tela.
+        self._command(_LCD_SET_DDRAM_ADDR)
         self._line_cache = [None] * self.rows
 
     def move_to(self, col, row):

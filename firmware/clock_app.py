@@ -48,7 +48,7 @@ _SENSOR_RESCAN_MS = 30000  # tenta redetectar um sensor ligado depois
 _MIN_SPEED_MS = 50
 _MIN_BIG_SPEED_MS = 200    # abaixo disso o caractere ampliado nem dá pra ler
 _MAX_DURATION_S = 3600
-_BIG_SCALE = 3             # cada coluna do glifo vira 3 colunas do display
+_BIG_SCALE = 4             # 5 colunas do glifo x 4 = 20 colunas do display
 
 
 def _as_int(value, default):
@@ -99,6 +99,11 @@ class ClockApp:
             cols=config.LCD_COLS,
             rows=config.LCD_ROWS,
         )
+        # Bloco cheio do letreiro ampliado: gravado na CGRAM (garantido em
+        # qualquer HD44780), em vez de usar uma posição da ROM de
+        # caracteres — a posição usada antes (0xFF) não é um bloco sólido
+        # em todas as variantes do controlador, e o texto saía ilegível.
+        self._lcd.create_char(bigfont.BLOCK_INDEX, bigfont.BLOCK_BITMAP)
 
         self._sensor, sensor_version = self._init_sensor()
         print("Modulos carregados:", config.VERSION, "|", lcd_hd44780.VERSION,
