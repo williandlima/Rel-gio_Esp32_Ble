@@ -249,6 +249,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
+            android:background="@drawable/bg_input_field"
+            android:padding="12dp"
             android:fontFamily="monospace"
             android:text=""
             android:textColor="@color/text_label"
@@ -276,6 +278,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:background="@drawable/bg_input_field"
+            android:padding="12dp"
             android:fontFamily="monospace"
             android:text=""
             android:textColor="@color/text_dark"
@@ -297,15 +301,24 @@
             android:textStyle="bold"
             android:letterSpacing="0.08" />
 
-        <TextView
-            android:id="@+id/textLog"
+        <ScrollView
+            android:id="@+id/scrollLog"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="160dp"
             android:layout_marginTop="8dp"
-            android:fontFamily="monospace"
-            android:textSize="12sp"
-            android:textColor="@color/text_dark"
-            android:text="" />
+            android:background="@drawable/bg_input_field"
+            android:padding="12dp"
+            android:scrollbars="vertical">
+
+            <TextView
+                android:id="@+id/textLog"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:textSize="12sp"
+                android:textColor="@color/text_dark"
+                android:text="" />
+        </ScrollView>
 
     </LinearLayout>
 </ScrollView>

@@ -41,12 +41,14 @@ firmware com BLE ativo), anunciando como **"Relogio-ESP32"**.
 
 1. Rode o app num celular Android físico (BLE não funciona bem em
    emulador) conectado via cabo USB, com depuração USB ativada.
-2. Toque em **"Conectar ao Relogio-ESP32"** — conceda as permissões de
-   Bluetooth/Localização pedidas.
-3. Quando conectar, o botão do topo muda para **"Desconectar"** e o app
-   assina as notificações de **Status** automaticamente (deve começar a
-   aparecer `{"mode": "normal", "temp_c": ..., "connected": true}` a cada
-   ~5s na seção "Status (notificações)").
+2. Toque em **"Conectar ao Relogio-ESP32"** (azul-marinho) — conceda as
+   permissões de Bluetooth/Localização pedidas. O botão muda pra
+   **"Conectando..."** (cinza) enquanto procura o dispositivo.
+3. Quando conectar, o botão fica **"Desconectar"** (castanho/taupe) e as
+   demais ações (antes desabilitadas/apagadas) voltam a ficar clicáveis.
+   O app assina as notificações de **Status** automaticamente (deve
+   começar a aparecer `{"mode": "normal", "temp_c": ..., "connected": true}`
+   a cada ~5s na seção "Status (notificações)").
 4. Toque em **"Sincronizar hora com o celular"** — a hora do display do
    relógio deve mudar para a hora atual (já ajustada pro fuso horário
    local do celular, ao contrário do teste manual anterior via nRF Connect

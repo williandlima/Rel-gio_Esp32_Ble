@@ -199,3 +199,7 @@ realmente rodando no ESP32/celular durante os testes:
 - Redesign da interface do app Android (paleta e componentes conforme
   mockup do Claude Design): `versionCode 3` / `versionName
   "1.2-ui-redesign"`.
+- Ajustes finos de UI (tema sem ActionBar padrão conflitante, 3 estados
+  visuais do botão conectar/desconectar, controles desabilitados até
+  conectar, log com rolagem própria): `versionCode 4` / `versionName
+  "1.3-ui-polish"`.

@@ -30,6 +30,7 @@ class MainActivity : AppCompatActivity() {
             ble.startScan()
         } else {
             appendLog("Permissoes negadas - nao e possivel usar Bluetooth.")
+            setDisconnectedState()
         }
     }
 
@@ -45,19 +46,21 @@ class MainActivity : AppCompatActivity() {
         ble.onLog = { msg -> runOnUiThread { appendLog(msg) } }
         ble.onConnectionStateChange = { connected ->
             runOnUiThread {
-                isConnected = connected
-                binding.buttonConnect.text =
-                    if (connected) "Desconectar" else "Conectar ao Relogio-ESP32"
-                binding.buttonConnect.setBackgroundResource(
-                    if (connected) R.drawable.bg_button_taupe else R.drawable.bg_button_navy
-                )
+                if (connected) setConnectedState() else setDisconnectedState()
             }
         }
         ble.onStatusChanged = { json -> runOnUiThread { binding.textStatus.text = json } }
         ble.onConfigRead = { json -> runOnUiThread { showConfig(json) } }
 
+        setDisconnectedState()
+
         binding.buttonConnect.setOnClickListener {
-            if (isConnected) ble.disconnect() else requestPermissionsAndScan()
+            if (isConnected) {
+                ble.disconnect()
+            } else {
+                setConnectingState()
+                requestPermissionsAndScan()
+            }
         }
 
         binding.buttonSyncTime.setOnClickListener {
@@ -119,6 +122,7 @@ class MainActivity : AppCompatActivity() {
         val adapter = BluetoothAdapter.getDefaultAdapter()
         if (adapter == null || !adapter.isEnabled) {
             appendLog("Ative o Bluetooth do celular primeiro.")
+            setDisconnectedState()
             return
         }
 
@@ -141,6 +145,54 @@ class MainActivity : AppCompatActivity() {
 
     private fun appendLog(msg: String) {
         binding.textLog.append("\n$msg")
+        binding.scrollLog.post { binding.scrollLog.fullScroll(View.FOCUS_DOWN) }
+    }
+
+    // O botao de topo tem 3 estados visuais, igual a maioria dos apps de
+    // BLE (nRF Connect, etc.): navy = desconectado (pronto pra conectar),
+    // cinza/muted = conectando (aguardando o ESP32 responder), taupe =
+    // conectado (pronto pra desconectar). Enquanto nao conectado, as
+    // demais acoes ficam desabilitadas para nao gerar escritas BLE sem
+    // efeito nenhum.
+    private fun setDisconnectedState() {
+        isConnected = false
+        binding.buttonConnect.isEnabled = true
+        binding.buttonConnect.text = "Conectar ao Relogio-ESP32"
+        binding.buttonConnect.setBackgroundResource(R.drawable.bg_button_navy)
+        binding.buttonConnect.setTextColor(getColor(R.color.primary_navy_text))
+        setBleControlsEnabled(false)
+    }
+
+    private fun setConnectingState() {
+        // Fica clicavel (nao trava o usuario caso o ESP32 nunca seja
+        // encontrado) - tocar de novo so reforca a mesma tentativa de scan.
+        binding.buttonConnect.text = "Conectando..."
+        binding.buttonConnect.setBackgroundResource(R.drawable.bg_button_muted)
+        binding.buttonConnect.setTextColor(getColor(R.color.muted_text))
+    }
+
+    private fun setConnectedState() {
+        isConnected = true
+        binding.buttonConnect.isEnabled = true
+        binding.buttonConnect.text = "Desconectar"
+        binding.buttonConnect.setBackgroundResource(R.drawable.bg_button_taupe)
+        binding.buttonConnect.setTextColor(getColor(R.color.taupe_text))
+        setBleControlsEnabled(true)
+    }
+
+    private fun setBleControlsEnabled(enabled: Boolean) {
+        val alpha = if (enabled) 1f else 0.45f
+        listOf(
+            binding.buttonSyncTime,
+            binding.buttonSendMarquee,
+            binding.buttonSaveConfig,
+            binding.buttonReadConfig,
+            binding.radioCelsius,
+            binding.radioFahrenheit
+        ).forEach {
+            it.isEnabled = enabled
+            it.alpha = alpha
+        }
     }
 
     override fun onDestroy() {

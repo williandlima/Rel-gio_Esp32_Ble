@@ -20,7 +20,7 @@
 
     <color name="text_dark">#3A352F</color>
     <color name="text_label">#8A8478</color>
-    <color name="text_error">#C0392B</color>
+    <color name="text_error">#C1512E</color>
     <color name="text_success">#3D7A4D</color>
     <color name="divider">#E1DCD3</color>
 </resources>

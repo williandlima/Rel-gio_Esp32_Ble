@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema proprio da tela (sem ActionBar/titulo padrao do AppCompat, que
+         entrava em conflito visual com a paleta do mockup) - barra de
+         status clara com icones escuros, igual ao print de referencia. -->
+    <style name="Theme.RelogioEsp32" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="colorPrimary">@color/primary_navy</item>
+        <item name="colorPrimaryDark">@color/primary_navy</item>
+        <item name="colorAccent">@color/outline_blue</item>
+        <item name="android:windowBackground">@color/app_background</item>
+        <item name="android:statusBarColor">@color/app_background</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>
