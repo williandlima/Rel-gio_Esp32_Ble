@@ -7,32 +7,33 @@ protocolo definido no `SPECS.md` (seção 4) e implementado em
 
 ## Como abrir o projeto no Android Studio
 
-Este diretório (`android-app/`) já é um projeto Gradle completo (build
-files, manifest, ícone, layout, código Kotlin) — **não precisa usar o
-assistente "New Project"**. Só falta uma coisa que não deu pra gerar aqui
-no ambiente remoto (rede bloqueada para os servidores da Google/Gradle):
-o **Gradle Wrapper**. É rápido de resolver no seu Mac, que tem internet
-normal:
+Este diretório (`android-app/`) já é um projeto Gradle completo — build
+files, manifest, ícone, layout, código Kotlin **e o Gradle Wrapper**
+(`gradlew`, `gradlew.bat`, `gradle/wrapper/`). Não precisa usar o
+assistente "New Project" nem gerar nada manualmente:
 
 1. Abra o Android Studio → **Open** (não "New Project") → selecione a
    pasta `android-app/` deste repositório.
-2. O Android Studio deve avisar que falta o Gradle Wrapper (ou tentar
-   sincronizar e falhar por isso). Se aparecer um aviso oferecendo para
-   criar o wrapper automaticamente, aceite.
-3. **Se não aparecer esse aviso automaticamente**, abra o terminal
-   integrado do Android Studio (**View > Tool Windows > Terminal**) e
-   rode:
-   ```bash
-   gradle wrapper --gradle-version 8.7 --distribution-type all
-   ```
-   (usa um Gradle instalado no seu Mac via Homebrew — `brew install
-   gradle` — se o comando `gradle` não existir).
-4. Depois disso, clique em **"Sync Project with Gradle Files"** (ícone do
-   elefante com a setinha, na barra de ferramentas).
+2. Aguarde a sincronização automática do Gradle (barra de progresso
+   embaixo). Na primeira vez, o próprio `gradlew` baixa o Gradle 8.14.3 e
+   as dependências do projeto — precisa de internet liberada para
+   `services.gradle.org`, `dl.google.com`/`maven.google.com` (SDK e
+   Android Gradle Plugin) e Maven Central (dependências do app).
+3. Para gerar o APK sem abrir a IDE: `./gradlew assembleDebug` (Mac/Linux)
+   ou `gradlew.bat assembleDebug` (Windows), gera o instalável em
+   `app/build/outputs/apk/debug/app-debug.apk`.
 
-Com o wrapper criado uma vez, tudo funciona normalmente daqui pra frente —
-inclusive para quem clonar o repositório depois de você (o wrapper vai
-para o Git).
+## Por que o build/APK não sai pronto deste repositório
+
+Este ambiente remoto tem acesso à internet restrito por política: o
+Gradle Wrapper foi gerado com sucesso aqui (havia um Gradle instalado
+localmente e `services.gradle.org` está liberado), mas a compilação em si
+depende do **Android Gradle Plugin** e do **Android SDK** (`android.jar`,
+`aapt2`, etc.), hospedados em `dl.google.com` — esse host é bloqueado de
+propósito pela política de rede deste ambiente (confirmado: a conexão é
+recusada mesmo por um domínio alternativo, `maven.google.com`, que
+redireciona para o mesmo host). Por isso o `.apk` final só pode ser
+gerado numa máquina com internet normal — a sua.
 
 ## Como testar
 
