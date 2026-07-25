@@ -150,6 +150,7 @@ class BleManager(private val context: Context) {
             }
         }
 
+        @Suppress("MissingPermission")
         override fun onCharacteristicWrite(
             g: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic,
@@ -157,6 +158,9 @@ class BleManager(private val context: Context) {
         ) {
             val ok = status == BluetoothGatt.GATT_SUCCESS
             log("Escrita em ${characteristic.uuid}: ${if (ok) "OK" else "falhou ($status)"}")
+            if (ok) {
+                sendNextChunk()
+            }
         }
     }
 
@@ -164,7 +168,17 @@ class BleManager(private val context: Context) {
         return gatt?.getService(SERVICE_UUID)?.getCharacteristic(uuid)
     }
 
-    @Suppress("DEPRECATION", "MissingPermission")
+    // A API classica de escrita do Android NAO fragmenta sozinha payloads
+    // maiores que o MTU negociado - ela manda uma unica vez, truncado, e
+    // nao reenvia o resto. Por isso partimos o payload em fatias pequenas
+    // (seguras mesmo com o MTU minimo de 23 bytes) e mandamos uma de cada
+    // vez, esperando a confirmacao (onCharacteristicWrite) antes da
+    // proxima - o ESP32 remonta os pedacos (ver ble_service.py).
+    private val chunkQueue = ArrayDeque<ByteArray>()
+    private var chunkCharacteristic: BluetoothGattCharacteristic? = null
+    private val CHUNK_SIZE = 20
+
+    @Suppress("MissingPermission")
     private fun writeCharacteristic(uuid: UUID, payload: ByteArray) {
         val g = gatt
         if (g == null) {
@@ -176,7 +190,18 @@ class BleManager(private val context: Context) {
             log("Caracteristica nao encontrada: $uuid")
             return
         }
-        char.value = payload
+        chunkQueue.clear()
+        chunkQueue.addAll(payload.toList().chunked(CHUNK_SIZE).map { it.toByteArray() })
+        chunkCharacteristic = char
+        sendNextChunk()
+    }
+
+    @Suppress("DEPRECATION", "MissingPermission")
+    private fun sendNextChunk() {
+        val g = gatt ?: return
+        val char = chunkCharacteristic ?: return
+        val chunk = chunkQueue.removeFirstOrNull() ?: return
+        char.value = chunk
         g.writeCharacteristic(char)
     }
 

@@ -93,6 +93,7 @@ class ClockBLEService:
 
     def _dispatch_json(self, value_handle, raw, callback):
         buf = self._write_buffers.get(value_handle, b"") + raw
+        print("Fragmento BLE recebido:", raw, "| acumulado ate agora:", buf)
         try:
             data = json.loads(buf)
         except ValueError:
