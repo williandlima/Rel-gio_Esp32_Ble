@@ -24,7 +24,7 @@ Seguindo o roadmap incremental definido no `SPECS.md` (seção 7):
 - [x] 3. Esqueleto do serviço BLE — validado (SetDateTime ajustando o RTC via Bluetooth)
 - [x] 4. App Android — validado, conectando e conversando via BLE com o firmware
 - [x] 5. Modo Letreiro — scroll + duração funcionando de ponta a ponta (app → BLE → display)
-- [ ] 6. Persistência (NVS) e revisão final
+- [x] 6. Persistência (NVS) — unidade de temperatura (°C/°F) salva em NVS, sobrevive a reinícios
 
 ## Estrutura
 

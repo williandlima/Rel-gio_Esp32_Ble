@@ -62,8 +62,8 @@ via BLE (etapa 4 do roadmap).
 
 ## Como testar o BLE (etapa 3 do roadmap)
 
-1. Suba `config.py`, `lcd_hd44780.py`, `ds18b20_sensor.py`, `ble_service.py`
-   e `test_ble.py`.
+1. Suba `config.py`, `lcd_hd44780.py`, `ds18b20_sensor.py`, `ble_service.py`,
+   `storage.py` e `test_ble.py`.
 2. Rode `test_ble.py` (F5). O display deve continuar mostrando o Modo
    Normal, e o ESP32 passa a anunciar via BLE como **"Relogio-ESP32"**.
 3. No celular, abra um app BLE genérico (ex: **nRF Connect**), conecte no
@@ -81,11 +81,38 @@ via BLE (etapa 4 do roadmap).
      um JSON com `temp_c` atualizado.
 
 **Sem o sensor DS18B20 conectado?** Use `test_ble_sem_sensor.py` no lugar de
-`test_ble.py` (suba `config.py`, `lcd_hd44780.py`, `ble_service.py` e
-`test_ble_sem_sensor.py` — não precisa do `ds18b20_sensor.py`). Funciona
-igual, só sem leitura de temperatura (linha 3 do display mostra um aviso,
-e o Status não inclui `temp_c`). É temporário — a versão completa
+`test_ble.py` (suba `config.py`, `lcd_hd44780.py`, `ble_service.py`,
+`storage.py` e `test_ble_sem_sensor.py` — não precisa do `ds18b20_sensor.py`).
+Funciona igual, só sem leitura de temperatura (linha 3 do display mostra um
+aviso, e o Status não inclui `temp_c`). É temporário — a versão completa
 (`test_ble.py`) continua sendo a "oficial" do projeto.
+
+## Como testar a persistência de configurações (etapa 6 do roadmap)
+
+A unidade de temperatura (`temp_unit`, `"C"` ou `"F"`) agora é salva na
+memória não-volátil (NVS) do ESP32 via o novo arquivo `storage.py` — ao
+contrário da hora (RTC interno), essa configuração **sobrevive** a
+reinícios e quedas de energia.
+
+1. Suba `storage.py` junto com os demais arquivos do BLE (ver seção
+   acima) e rode `test_ble.py` (ou `test_ble_sem_sensor.py`).
+2. Pelo app Android (ou nRF Connect), escreva na característica **Config**:
+   `{"temp_unit": "F"}`. O Shell do Thonny mostra `Config recebido: {...}`
+   e, se tiver o sensor, a linha 3 do display passa a mostrar a
+   temperatura em Fahrenheit.
+3. Pressione o botão **EN/RESET** físico do ESP32 (ou desligue e ligue a
+   alimentação) para simular uma queda de energia.
+4. Depois do reboot, rode `test_ble.py` de novo: a temperatura já deve
+   aparecer em Fahrenheit **sem precisar reconfigurar** — prova de que a
+   escolha foi lida do NVS, e não perdida no reinício.
+5. Para conferir pelo app: use o botão de **ler Config** — a resposta deve
+   vir com `{"temp_unit": "F"}` mesmo logo após o boot, antes de qualquer
+   nova escrita.
+
+> A hora continua **não** sendo persistida (por design — ver SPECS.md
+> seção 2.3/3.3): após o reset, é preciso reenviar a hora atual pelo app
+> (botão de sincronizar hora) antes do Modo Normal voltar a mostrar a
+> hora certa.
 
 ## Pinagem usada (ver `config.py` / `SPECS.md` seção 2.2)
 

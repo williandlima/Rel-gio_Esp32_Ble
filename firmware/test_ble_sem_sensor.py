@@ -18,13 +18,17 @@ from utime import sleep_ms, ticks_ms, ticks_diff, localtime
 
 import lcd_hd44780
 import ble_service
+import storage
 from lcd_hd44780 import LCD4Bit
 from ble_service import ClockBLEService
 import config
 
-VERSION = "test_ble_sem_sensor.py v3"
+VERSION = "test_ble_sem_sensor.py v4"
 print("=== ", VERSION, " ===")
-print("Modulos carregados:", config.VERSION, "|", lcd_hd44780.VERSION, "|", ble_service.VERSION)
+print(
+    "Modulos carregados:",
+    config.VERSION, "|", lcd_hd44780.VERSION, "|", ble_service.VERSION, "|", storage.VERSION,
+)
 
 WEEKDAYS = ("", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom")
 
@@ -88,7 +92,16 @@ def handle_marquee(data):
     print("Modo Letreiro ativado:", text, duration_s, "s @", speed_ms, "ms")
 
 
+temp_unit = storage.load_temp_unit()
+
+
 def handle_config_write(data):
+    global temp_unit
+    unit = data.get("temp_unit")
+    if unit in ("C", "F"):
+        temp_unit = unit
+        storage.save_temp_unit(unit)
+        ble.set_config({"temp_unit": temp_unit})
     print("Config recebido:", data)
 
 
@@ -96,7 +109,7 @@ ble = ClockBLEService(name="Relogio-ESP32")
 ble.on_set_datetime = handle_set_datetime
 ble.on_marquee = handle_marquee
 ble.on_config_write = handle_config_write
-ble.set_config({"temp_unit": "C"})
+ble.set_config({"temp_unit": temp_unit})
 
 STATUS_REFRESH_MS = 5000
 last_status_ticks = ticks_ms()

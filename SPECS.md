@@ -98,9 +98,9 @@ Linha 4: [status BLE / livre]   <- indicador de conexão BLE, ou em branco
 - **Hora/data**: mantidas pelo RTC interno do ESP32 (`machine.RTC`) enquanto
   a placa estiver ligada. **Não sobrevive a queda de energia/reset** — o
   app precisa reenviar a hora via BLE sempre que isso acontecer.
-- **Configurações** (ex: unidade de temperatura °C/°F, brilho/contraste se
-  controlável por software): salvas em NVS via `esp32.NVS()` (MicroPython),
-  sobrevivem a reinícios.
+- **Configurações** (unidade de temperatura °C/°F): salvas em NVS via
+  `esp32.NVS()` (MicroPython, módulo `storage.py`), sobrevivem a
+  reinícios — implementado e validado na etapa 6.
 - **Letreiro**: não persiste entre reinícios (efêmero) — se o ESP32
   reiniciar durante o letreiro, volta ao Modo Normal.
 
@@ -169,7 +169,9 @@ para a próxima:
 4. **App Android** — desenvolvido contra o BLE já funcional do firmware.
 5. **Modo Letreiro** — scroll + duração, acionado pelas mensagens recebidas
    via BLE (firmware + app).
-6. **Persistência** (NVS) e revisão final de todas as configurações.
+6. **Persistência** (NVS) e revisão final de todas as configurações —
+   `storage.py` salva `temp_unit` em NVS, lido no boot e reaplicado sem
+   precisar reconfigurar pelo app após reinícios.
 
 ## 8. Convenção de Versionamento
 
@@ -192,3 +194,5 @@ realmente rodando no ESP32/celular durante os testes:
 - Referência do último marco totalmente validado (display + RTC interno +
   BLE + Modo Letreiro, ponta a ponta com o app Android): commit
   `3a645fc` desta branch.
+- Persistência de configurações (`storage.py`, etapa 6): `test_ble.py`
+  e `test_ble_sem_sensor.py` subiram para v4.

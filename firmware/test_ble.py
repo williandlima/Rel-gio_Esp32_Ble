@@ -17,17 +17,18 @@ from utime import sleep_ms, ticks_ms, ticks_diff, localtime
 import lcd_hd44780
 import ds18b20_sensor
 import ble_service
+import storage
 from lcd_hd44780 import LCD4Bit
 from ds18b20_sensor import DS18B20
 from ble_service import ClockBLEService
 import config
 
-VERSION = "test_ble.py v3"
+VERSION = "test_ble.py v4"
 print("=== ", VERSION, " ===")
 print(
     "Modulos carregados:",
     config.VERSION, "|", lcd_hd44780.VERSION, "|",
-    ds18b20_sensor.VERSION, "|", ble_service.VERSION,
+    ds18b20_sensor.VERSION, "|", ble_service.VERSION, "|", storage.VERSION,
 )
 
 WEEKDAYS = ("", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom")
@@ -91,7 +92,22 @@ def handle_marquee(data):
     print("Modo Letreiro ativado:", text, duration_s, "s @", speed_ms, "ms")
 
 
+temp_unit = storage.load_temp_unit()
+
+
+def format_temp(temp_c):
+    if temp_unit == "F":
+        return "Temp: {:.1f} F".format(temp_c * 9 / 5 + 32)
+    return "Temp: {:.1f} C".format(temp_c)
+
+
 def handle_config_write(data):
+    global temp_unit
+    unit = data.get("temp_unit")
+    if unit in ("C", "F"):
+        temp_unit = unit
+        storage.save_temp_unit(unit)
+        ble.set_config({"temp_unit": temp_unit})
     print("Config recebido:", data)
 
 
@@ -99,7 +115,7 @@ ble = ClockBLEService(name="Relogio-ESP32")
 ble.on_set_datetime = handle_set_datetime
 ble.on_marquee = handle_marquee
 ble.on_config_write = handle_config_write
-ble.set_config({"temp_unit": "C"})
+ble.set_config({"temp_unit": temp_unit})
 
 TEMP_REFRESH_MS = 5000
 STATUS_REFRESH_MS = 5000
@@ -138,7 +154,7 @@ while True:
     year, month, day, weekday, hour, minute, second, _ = rtc.datetime()
     date_str = "{}, {:02d}/{:02d}/{:04d}".format(WEEKDAYS[weekday], day, month, year)
     time_str = "{:02d}:{:02d}:{:02d}".format(hour, minute, second)
-    temp_str = "Temp: {:.1f} C".format(last_temp_c)
+    temp_str = format_temp(last_temp_c)
 
     lcd.write_line(date_str, row=0)
     lcd.write_line(time_str, row=1)
